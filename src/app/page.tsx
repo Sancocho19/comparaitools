@@ -1,5 +1,6 @@
 import tools from "@/data/tools.json";
 import Link from "next/link";
+import SearchBar from "@/components/SearchBar";
 
 const categories = [...new Set(tools.map((t) => t.category))];
 const categoryLabels: Record<string, string> = {};
@@ -136,31 +137,49 @@ export default function HomePage() {
     <>
       <div className="grain-overlay" />
 
-      {/* NAVBAR */}
+      {/* NAVBAR — con SearchBar integrado */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: "rgba(10,10,15,0.9)", borderBottom: "1px solid var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-sm sm:text-base font-black shrink-0"
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex items-center gap-4">
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-sm sm:text-base font-black"
               style={{ background: "linear-gradient(135deg, var(--accent), var(--purple))", color: "var(--bg)" }}>C</div>
-            <span className="font-extrabold text-base sm:text-lg" style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}>
+            <span className="font-extrabold text-base sm:text-lg hidden sm:block" style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}>
               <span className="text-[var(--accent)]">Compar</span>
               <span className="text-[var(--text)]">AITools</span>
             </span>
           </Link>
-          <div className="hidden sm:flex gap-6 items-center">
-            {[{ label: "Tools", href: "/tools" }, { label: "Compare", href: "/#comparisons" }, { label: "Blog", href: "/blog" }].map((item) => (
-              <Link key={item.label} href={item.href} className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">
+
+          {/* SearchBar — centro del navbar */}
+          <div className="flex-1 hidden sm:block">
+            <SearchBar />
+          </div>
+
+          {/* Nav links */}
+          <div className="hidden sm:flex gap-6 items-center shrink-0">
+            {[{ label: "Tools", href: "/tools" }, { label: "Compare", href: "/compare" }, { label: "Blog", href: "/blog" }].map((item) => (
+              <Link key={item.label} href={item.href}
+                className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">
                 {item.label}
               </Link>
             ))}
           </div>
-          <Link href="/tools" className="sm:hidden px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: "var(--accent)", color: "var(--bg)" }}>
+
+          {/* Mobile: solo botón */}
+          <Link href="/tools" className="sm:hidden px-3 py-1.5 rounded-lg text-xs font-semibold ml-auto"
+            style={{ background: "var(--accent)", color: "var(--bg)" }}>
             All Tools
           </Link>
         </div>
+
+        {/* SearchBar en mobile — debajo del navbar */}
+        <div className="sm:hidden px-4 pb-3">
+          <SearchBar />
+        </div>
       </nav>
 
-      {/* MAIN */}
+      {/* MAIN — igual que antes */}
       <main className="site-container relative z-10">
         <header className="text-center py-12 sm:py-16 md:py-20 relative">
           <div className="hero-glow" />
@@ -202,7 +221,6 @@ export default function HomePage() {
         <div id="comparisons"><ComparisonPreview /></div>
         <CategorySection />
         <AdSlot size="banner" />
-
       </main>
     </>
   );

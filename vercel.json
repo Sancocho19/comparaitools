@@ -7,34 +7,35 @@
     {
       "path": "/api/auto-generate?secret=comparaitools-secret-2026-xyz",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/discover-tools?secret=comparaitools-secret-2026-xyz&approve=true",
+      "schedule": "0 10 * * 1"
     }
   ],
   "headers": [
     {
       "source": "/blog/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/api/search",
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=60, stale-while-revalidate=300" }
       ]
     },
     {
       "source": "/tools/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "s-maxage=3600, stale-while-revalidate=86400"
-        }
+        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=86400" }
       ]
     },
     {
       "source": "/sitemap.xml",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "s-maxage=3600, stale-while-revalidate=86400"
-        }
+        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=86400" }
       ]
     }
   ]

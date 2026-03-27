@@ -3,6 +3,7 @@
 import tools from "@/data/tools.json";
 import Link from "next/link";
 import type { Metadata } from "next";
+import SearchBar from "@/components/SearchBar";
 
 export const metadata: Metadata = {
   title: "All AI Tools 2026 — Reviews, Pricing & Comparisons | ComparAITools",
@@ -56,6 +57,7 @@ export default function ToolsPage({
       />
 
       <div className="grain-overlay" />
+      
 
       {/* Navbar */}
       <nav
@@ -64,7 +66,7 @@ export default function ToolsPage({
           background: "rgba(10,10,15,0.9)",
           borderBottom: "1px solid var(--border)",
         }}
-      >
+      > <div className="flex-1 hidden sm:block"><SearchBar /></div>
         <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <div

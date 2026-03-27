@@ -56,10 +56,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, keyPrefix: apiKey.substring(0, 20) }, { status: 500 });
   }
 }
-```
-
-**Guarda y cierra.** Luego:
-```
-git add .
-git commit -m "Debug: better error logging for auto-generate"
-git push

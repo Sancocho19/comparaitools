@@ -201,58 +201,47 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </main>
 
       <style>{`
-        .blog-content { color: var(--text-muted); line-height: 1.8; font-size: 16px; min-width: 0; word-wrap: break-word; overflow-wrap: break-word; }
-        .blog-content h1 { font-size: 1.6em; font-weight: 800; margin: 0 0 0.7em; color: var(--text); line-height: 1.25; font-family: var(--font-mono); }
-        .blog-content h2 { font-size: 1.25em; font-weight: 700; margin: 1.8em 0 0.6em; color: var(--text); padding-bottom: 0.35em; border-bottom: 1px solid var(--border); }
-        .blog-content h3 { font-size: 1.05em; font-weight: 600; margin: 1.4em 0 0.4em; color: var(--text); }
-        .blog-content p { margin: 0 0 1.1em; }
-        .blog-content ul, .blog-content ol { margin: 0 0 1.1em 1.4em; padding: 0; }
-        .blog-content li { margin-bottom: 0.4em; }
+        .blog-content { color: var(--text-muted); line-height: 1.85; font-size: 16px; min-width: 0; word-wrap: break-word; overflow-wrap: break-word; }
+        .blog-content h1 { font-size: 2em; font-weight: 800; margin: 0 0 0.6em; color: var(--text); line-height: 1.2; font-family: inherit; }
+        .blog-content h2 { font-size: 1.3em; font-weight: 700; margin: 2em 0 0.7em; color: var(--text); padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
+        .blog-content h3 { font-size: 1.1em; font-weight: 600; margin: 1.5em 0 0.5em; color: var(--text); }
+        .blog-content p { margin: 0 0 1.2em; }
+        .blog-content ul, .blog-content ol { margin: 0 0 1.2em 1.5em; padding: 0; }
+        .blog-content li { margin-bottom: 0.5em; }
         .blog-content a { color: var(--accent); text-decoration: underline; }
         .blog-content strong { font-weight: 700; color: var(--text); }
-
-        .blog-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 13px; table-layout: fixed; }
-        .blog-content th { background: var(--bg-card); padding: 9px 12px; text-align: left; font-weight: 600; border: 1px solid var(--border); color: var(--text); word-wrap: break-word; }
-        .blog-content td { padding: 8px 12px; border: 1px solid var(--border); vertical-align: top; word-wrap: break-word; }
+        .blog-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 14px; table-layout: fixed; word-wrap: break-word; }
+        .blog-content th { background: var(--bg-card); padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid var(--border); color: var(--text); }
+        .blog-content td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; word-wrap: break-word; }
         .blog-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
-
-        .blog-content .quick-verdict, .blog-content .tldr-box,
-        .blog-content .intro-section, .blog-content .intro-box {
-          padding: 18px 20px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin: 1.4em 0;
-        }
-        .blog-content .quick-picks-box, .blog-content .quick-picks {
-          padding: 14px 18px; border-radius: 10px; background: var(--bg-card); border-left: 3px solid var(--accent); margin: 1em 0 1.4em;
-        }
-        .blog-content .toc { padding: 14px 18px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.8em; font-size: 14px; }
-        .blog-content .toc ol { margin: 0.4em 0 0 1.2em; }
-        .blog-content .toc li { margin-bottom: 4px; }
-
-        .blog-content .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1em 0 1.4em; min-width: 0; }
-        .blog-content .pros { padding: 14px; border-radius: 10px; background: rgba(0,229,160,0.04); border: 1px solid rgba(0,229,160,0.15); min-width: 0; word-wrap: break-word; }
-        .blog-content .cons { padding: 14px; border-radius: 10px; background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); min-width: 0; word-wrap: break-word; }
-
-        .blog-content .faq-item { margin-bottom: 1.3em; padding-bottom: 1.3em; border-bottom: 1px solid var(--border); }
+        .blog-content .quick-verdict, .blog-content .tldr-box, .blog-content .intro-section, .blog-content .intro-box { padding: 20px 24px; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); margin: 1.5em 0; }
+        .blog-content .quick-picks-box, .blog-content .quick-picks { padding: 16px 20px; border-radius: 10px; background: var(--bg-card); border-left: 3px solid var(--accent); margin: 1em 0 1.5em; }
+        .blog-content .toc { padding: 16px 20px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.8em; font-size: 14px; }
+        .blog-content .toc ol { margin: 0.5em 0 0 1.2em; }
+        .blog-content .toc li { margin-bottom: 5px; }
+        .blog-content .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 1em 0 1.5em; min-width: 0; }
+        .blog-content .pros { padding: 16px; border-radius: 10px; background: rgba(0,229,160,0.04); border: 1px solid rgba(0,229,160,0.15); min-width: 0; overflow-wrap: break-word; }
+        .blog-content .cons { padding: 16px; border-radius: 10px; background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); min-width: 0; overflow-wrap: break-word; }
+        .blog-content .faq-item { margin-bottom: 1.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--border); }
         .blog-content .faq-item:last-child { border-bottom: none; }
         .blog-content .tool-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin: 0.4em 0 1em; }
-        .blog-content .rating-display { font-size: 1.05em; margin: 0.4em 0; }
-        .blog-content .best-for, .blog-content .pricing-quick { font-size: 0.94em; margin: 0.4em 0; }
-        .blog-content .prerequisites { padding: 14px 18px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.4em; }
-
+        .blog-content .rating-display { font-size: 1.1em; margin: 0.4em 0; }
+        .blog-content .best-for, .blog-content .pricing-quick { font-size: 0.95em; margin: 0.4em 0; }
+        .blog-content .prerequisites { padding: 14px 18px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.5em; }
         .mobile-cta { display: none; }
-
         @media (max-width: 860px) {
           main > div[style] { grid-template-columns: 1fr !important; }
           aside { display: none !important; }
           .mobile-cta { display: block !important; }
           .blog-content { font-size: 15px; }
-          .blog-content h1 { font-size: 1.35em; }
-          .blog-content h2 { font-size: 1.15em; }
+          .blog-content h1 { font-size: 1.5em; }
+          .blog-content h2 { font-size: 1.2em; }
           .blog-content .pros-cons-grid { grid-template-columns: 1fr; }
-          .blog-content table { font-size: 12px; display: block; overflow-x: auto; table-layout: auto; }
+          .blog-content table { display: block; overflow-x: auto; table-layout: auto; }
         }
         @media (max-width: 480px) {
           .blog-content { font-size: 14px; }
-          .blog-content h1 { font-size: 1.25em; }
+          .blog-content h1 { font-size: 1.3em; }
         }
       `}</style>
     </>

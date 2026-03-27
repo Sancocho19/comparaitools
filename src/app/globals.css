@@ -147,3 +147,39 @@ a { color: inherit; text-decoration: none; }
 .ad-slot-banner { height: 90px; }
 .ad-slot-native { height: 120px; }
 .ad-slot-sidebar { height: 250px; max-width: 300px; }
+
+/* ═══ FIX: Force card styles on all subpages ═══ */
+main > div[class*="rounded"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 24px 32px !important;
+  margin-bottom: 24px !important;
+}
+
+main > div.grid > div[class*="rounded"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 24px 32px !important;
+}
+
+main {
+  max-width: 800px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+}
+
+nav + main {
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+}
+```
+
+**Guarda con Ctrl+S y cierra.** Luego:
+```
+git add .
+git commit -m "Fix: force centered layout on all subpages"
+git push

@@ -39,10 +39,3 @@ export async function generateBlogPost(topic: string) {
   });
   return message.content[0].type === 'text' ? message.content[0].text : '';
 }
-```
-
-**Guarda con Ctrl+S y cierra Notepad.** Luego ejecuta:
-```
-git add .
-git commit -m "Fix anthropic.ts - remove extra text"
-git push

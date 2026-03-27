@@ -202,7 +202,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       <style>{`
         .blog-content { color: var(--text-muted); line-height: 1.85; font-size: 16px; min-width: 0; word-wrap: break-word; overflow-wrap: break-word; }
-        .blog-content h1 { font-size: 2em; font-weight: 800; margin: 0 0 0.6em; color: var(--text); line-height: 1.2; font-family: inherit; }
+        .blog-content h1 { font-size: 1.4em; font-weight: 700; margin: 0 0 0.6em; color: var(--text); line-height: 1.3; font-family: inherit; }
         .blog-content h2 { font-size: 1.3em; font-weight: 700; margin: 2em 0 0.7em; color: var(--text); padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
         .blog-content h3 { font-size: 1.1em; font-weight: 600; margin: 1.5em 0 0.5em; color: var(--text); }
         .blog-content p { margin: 0 0 1.2em; }

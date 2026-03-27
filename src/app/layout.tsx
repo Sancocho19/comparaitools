@@ -79,7 +79,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#0a0a0f" />
-	<meta name="google-site-verification" content="hpE6yggeCpp5GO9UF_2EJVLRZTP1iluds-D2dy_VxOU" />
+        <meta name="google-site-verification" content="hpE6yggeCpp5GO9UF_2EJVLRZTP1iluds-D2dy_VxOU" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DZWL8K43V0"></script>
+        <script dangerouslySetInnerHTML={{__html:`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-DZWL8K43V0');`}}/>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-DZWL8K43V0"></script>
+	<script dangerouslySetInnerHTML={{__html:`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-	DZWL8K43V0');`}}/>
         {/* JSON-LD Website Schema */}
         <script
           type="application/ld+json"

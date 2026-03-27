@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBlogPost } from '@/lib/anthropic';
 import tools from '@/data/tools.json';
-
-const BLOG_TOPICS = [
-  "Best AI Coding Assistants {year}: Complete Comparison",
-  "AI Image Generators Ranked: Quality, Speed & Price",
-  "{tool} Review {year}: Is It Worth It?",
-  "Free AI Tools That Rival Paid Alternatives",
-  "AI Tools for Small Business: The Complete Guide",
-  "ChatGPT vs Claude vs Gemini: Which is Best in {year}?",
-  "Best Free AI Tools in {year}",
-  "{tool} Alternatives: Top 5 Competitors Compared",
-  "AI Tools for Content Creators: The Ultimate Guide {year}",
-  "How to Choose the Right AI Tool for Your Needs",
-];
 
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
@@ -22,22 +8,58 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    return NextResponse.json({ error: 'No API key found' }, { status: 500 });
+  }
+
   try {
     const year = new Date().getFullYear();
     const randomTool = tools[Math.floor(Math.random() * tools.length)];
-    const randomTopic = BLOG_TOPICS[Math.floor(Math.random() * BLOG_TOPICS.length)]
-      .replace('{year}', year.toString())
-      .replace('{tool}', randomTool.name);
+    const topic = `${randomTool.name} Review ${year}: Is It Worth It?`;
 
-    const content = await generateBlogPost(randomTopic);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'user',
+            content: `Write a short SEO paragraph about: ${topic}`,
+          },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      return NextResponse.json({ error: data.error.message, type: data.error.type, keyPrefix: apiKey.substring(0, 20) }, { status: 500 });
+    }
+
+    const text = data.content?.[0]?.text || 'No content';
 
     return NextResponse.json({
       success: true,
-      topic: randomTopic,
-      contentLength: content.length,
-      preview: content.substring(0, 200),
+      topic: topic,
+      contentLength: text.length,
+      preview: text.substring(0, 200),
     });
-  } catch (error) {
-    return NextResponse.json({ error: 'Generation failed' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message, keyPrefix: apiKey.substring(0, 20) }, { status: 500 });
   }
 }
+```
+
+**Guarda y cierra.** Luego:
+```
+git add .
+git commit -m "Debug: better error logging for auto-generate"
+git push

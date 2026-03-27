@@ -1,8 +1,12 @@
 // src/app/compare/page.tsx
 
-import tools from "@/data/tools.json";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import Link from "next/link";
 import type { Metadata } from "next";
+import SearchBar from "@/components/SearchBar";
+import { getAllTools, bootstrapStaticTools } from "@/lib/tools-storage";
 
 export const metadata: Metadata = {
   title: "Compare AI Tools Side by Side (2026) | ComparAITools",
@@ -16,33 +20,35 @@ export const metadata: Metadata = {
   },
 };
 
-const YEAR = 2026;
+export default async function ComparePage() {
+  await bootstrapStaticTools();
+  const allTools = (await getAllTools()).filter(t => t.verified);
 
-// Generar todos los pares posibles (mismo category primero, luego cross-category)
-function getAllPairs() {
-  const sameCat: { toolA: typeof tools[0]; toolB: typeof tools[0] }[] = [];
-  const crossCat: { toolA: typeof tools[0]; toolB: typeof tools[0] }[] = [];
+  // Generate all pairs
+  const sameCat: { toolA: typeof allTools[0]; toolB: typeof allTools[0] }[] = [];
+  const crossCat: { toolA: typeof allTools[0]; toolB: typeof allTools[0] }[] = [];
 
-  for (let i = 0; i < tools.length; i++) {
-    for (let j = i + 1; j < tools.length; j++) {
-      if (tools[i].category === tools[j].category) {
-        sameCat.push({ toolA: tools[i], toolB: tools[j] });
+  for (let i = 0; i < allTools.length; i++) {
+    for (let j = i + 1; j < allTools.length; j++) {
+      if (allTools[i].category === allTools[j].category) {
+        sameCat.push({ toolA: allTools[i], toolB: allTools[j] });
       } else {
-        crossCat.push({ toolA: tools[i], toolB: tools[j] });
+        crossCat.push({ toolA: allTools[i], toolB: allTools[j] });
       }
     }
   }
-  return { sameCat, crossCat };
-}
 
-const categories = [...new Set(tools.map(t => t.category))].map(cat => ({
-  category: cat,
-  label: tools.find(t => t.category === cat)!.categoryLabel,
-  tools: tools.filter(t => t.category === cat),
-}));
-
-export default function ComparePage() {
-  const { sameCat, crossCat } = getAllPairs();
+  // Categories with their tools
+  const categoryMap = new Map<string, { label: string; tools: typeof allTools }>();
+  for (const t of allTools) {
+    if (!categoryMap.has(t.category)) {
+      categoryMap.set(t.category, { label: t.categoryLabel, tools: [] });
+    }
+    categoryMap.get(t.category)!.tools.push(t);
+  }
+  const categories = Array.from(categoryMap.entries()).map(([cat, v]) => ({
+    category: cat, label: v.label, tools: v.tools,
+  }));
 
   return (
     <>
@@ -50,18 +56,19 @@ export default function ComparePage() {
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: "rgba(10,10,15,0.92)", borderBottom: "1px solid var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
               style={{ background: "linear-gradient(135deg, var(--accent), var(--purple))", color: "var(--bg)" }}>
               C
             </div>
-            <span className="font-extrabold text-lg" style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}>
+            <span className="font-extrabold text-lg hidden sm:block" style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}>
               <span className="text-[var(--accent)]">Compar</span>
               <span className="text-[var(--text)]">AITools</span>
             </span>
           </Link>
-          <div className="hidden md:flex gap-6 items-center">
+          <div className="flex-1 hidden md:block"><SearchBar /></div>
+          <div className="hidden md:flex gap-6 items-center shrink-0">
             <Link href="/tools" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Tools</Link>
             <Link href="/compare" className="text-[var(--accent)] text-[13px] font-medium">Compare</Link>
             <Link href="/blog" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Blog</Link>
@@ -83,15 +90,15 @@ export default function ComparePage() {
             <span className="text-[var(--accent)]">AI Tools</span>
           </h1>
           <p className="text-[15px] text-[var(--text-muted)] max-w-lg mx-auto">
-            Head-to-head comparisons with real data. Pricing, features, and ratings — find the perfect tool for your needs.
+            Head-to-head comparisons with real data. Pricing, features, and ratings — updated automatically as new tools launch.
           </p>
         </div>
 
-        {/* Stats */}
+        {/* Stats — dinámicos desde Redis */}
         <div className="grid grid-cols-3 gap-4 mb-12">
           {[
-            { label: "Tools Tracked", value: tools.length + "+" },
-            { label: "Comparisons Available", value: sameCat.length + crossCat.length + "+" },
+            { label: "Tools Tracked", value: `${allTools.length}+` },
+            { label: "Comparisons Available", value: `${sameCat.length + crossCat.length}+` },
             { label: "Updated", value: "Daily" },
           ].map(({ label, value }) => (
             <div key={label} className="text-center p-5 rounded-2xl"
@@ -103,11 +110,9 @@ export default function ComparePage() {
           ))}
         </div>
 
-        {/* Same-category comparisons by section */}
+        {/* Same-category comparisons — incluye tools nuevas */}
         {categories.map(({ category, label, tools: catTools }) => {
-          const pairs = sameCat.filter(
-            p => p.toolA.category === category
-          );
+          const pairs = sameCat.filter(p => p.toolA.category === category);
           if (pairs.length === 0) return null;
 
           return (
@@ -124,7 +129,7 @@ export default function ComparePage() {
                 {pairs.map(({ toolA, toolB }) => (
                   <Link
                     key={`${toolA.slug}-${toolB.slug}`}
-                    href={`/compare/${toolA.slug}-vs-${toolB.slug}`}
+                    href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}-2026`}
                     className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
                     style={{ background: "var(--bg-card)", border: "1px solid var(--border)", textDecoration: "none" }}
                   >
@@ -153,7 +158,7 @@ export default function ComparePage() {
           );
         })}
 
-        {/* Cross-category — most popular */}
+        {/* Cross-category */}
         <div className="mb-12">
           <h2 className="text-lg font-bold text-[var(--text)] mb-2">Cross-Category Comparisons</h2>
           <p className="text-[13px] text-[var(--text-muted)] mb-5">Compare tools across different categories</p>
@@ -161,7 +166,7 @@ export default function ComparePage() {
             {crossCat.slice(0, 12).map(({ toolA, toolB }) => (
               <Link
                 key={`${toolA.slug}-${toolB.slug}`}
-                href={`/compare/${toolA.slug}-vs-${toolB.slug}`}
+                href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}-2026`}
                 className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
                 style={{ background: "var(--bg-card)", border: "1px solid var(--border)", textDecoration: "none" }}
               >

@@ -194,7 +194,7 @@ export default function HomePage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] mb-5 sm:mb-6 gradient-text">
               Compare Every AI Tool.<br />Decide in Seconds.
             </h1>
-            <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-[480px] mx-auto mb-7 sm:mb-8 leading-relaxed">
+            <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-[480px] mx-auto mb-7 sm:mb-8 leading-relaxed text-center">
               Real-time comparisons, reviews, and data-driven insights for {tools.length}+ AI tools. Find the perfect tool for your needs.
             </p>
             <Link href="/tools" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105 active:scale-95"

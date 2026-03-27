@@ -66,7 +66,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: 'rgba(10,10,15,0.92)', borderBottom: '1px solid var(--border)' }}>
-        <div className="max-w-[1100px] mx-auto px-6 py-3.5 flex justify-between items-center">
+        <div className="max-w-[1280px] mx-auto px-6 py-3.5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
               style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>
@@ -85,7 +85,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </nav>
 
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 40px' }}>
 
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-dim)', marginBottom: '24px' }}>
@@ -97,7 +97,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         {/* Two-column layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '40px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '48px', alignItems: 'start' }}>
 
           {/* ARTICLE */}
           <article style={{ minWidth: 0, width: '100%' }}>

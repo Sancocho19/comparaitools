@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "@upstash/redis": "^1.37.0",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.1",

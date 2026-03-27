@@ -1,15 +1,12 @@
 // src/app/blog/[slug]/page.tsx
-// Crea la carpeta: src/app/blog/[slug]/ y pon este archivo dentro como page.tsx
-
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { getPost, getManifest, getRelatedPosts } from '@/lib/kv-storage';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// ─── generateMetadata — SEO dinámico ─────────────────────────────────────────
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { getPost, getRelatedPosts } from '@/lib/kv-storage';
 
 export async function generateMetadata(
   { params }: { params: { slug: string } }
@@ -41,8 +38,6 @@ export async function generateMetadata(
   };
 }
 
-// ─── Page Component ───────────────────────────────────────────────────────────
-
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = await getPost(params.slug);
   if (!post) notFound();
@@ -57,7 +52,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     guide: 'Guide', pricing: 'Pricing Guide',
   };
 
-  // BreadcrumbList schema
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -70,98 +64,82 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   return (
     <>
-      {/* Schema.org JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(post.schemaOrg) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(post.schemaOrg) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
+      <div className="grain-overlay" />
+
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: 'rgba(10,10,15,0.9)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>
+              C
+            </div>
+            <span className="font-extrabold text-lg" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '-0.5px' }}>
+              <span className="text-[var(--accent)]">Compar</span>
+              <span className="text-[var(--text)]">AITools</span>
+            </span>
+          </Link>
+          <div className="hidden md:flex gap-6 items-center">
+            <Link href="/tools" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Tools</Link>
+            <Link href="/compare" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Compare</Link>
+            <Link href="/blog" className="text-[var(--accent)] text-[13px] font-medium">Blog</Link>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-[1200px] mx-auto px-6 py-10 relative z-10">
         {/* Breadcrumb */}
-        <nav aria-label="breadcrumb" style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-          <Link href="/" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>Home</Link>
-          {' / '}
-          <Link href="/blog" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>Blog</Link>
-          {' / '}
-          <span>{TYPE_LABELS[post.type] ?? post.type}</span>
+        <nav aria-label="breadcrumb" className="flex items-center gap-2 text-xs text-[var(--text-dim)] mb-8">
+          <Link href="/" className="hover:text-[var(--accent)]">Home</Link>
+          <span>/</span>
+          <Link href="/blog" className="hover:text-[var(--accent)]">Blog</Link>
+          <span>/</span>
+          <span className="text-[var(--text-muted)]">{TYPE_LABELS[post.type] ?? post.type}</span>
         </nav>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '48px', alignItems: 'start' }}>
+        <div className="grid gap-12" style={{ gridTemplateColumns: '1fr 280px' }}>
           {/* Main content */}
           <article>
-            {/* Post header */}
-            <header style={{ marginBottom: '32px' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
-                <span style={{
-                  fontSize: '12px', fontWeight: 600, textTransform: 'uppercase',
-                  letterSpacing: '0.05em', padding: '4px 10px', borderRadius: '4px',
-                  background: '#3b82f620', color: '#3b82f6',
-                }}>
+            {/* Header */}
+            <header className="mb-8">
+              <div className="flex items-center gap-3 flex-wrap mb-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+                  style={{ background: 'rgba(0,229,160,0.1)', color: 'var(--accent)' }}>
                   {TYPE_LABELS[post.type] ?? post.type}
                 </span>
-                <time style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  {publishDate}
-                </time>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  · {post.readingTime} min read
-                </span>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  · {post.wordCount.toLocaleString()} words
-                </span>
+                <time className="text-[13px] text-[var(--text-muted)]">{publishDate}</time>
+                <span className="text-[13px] text-[var(--text-dim)]">· {post.readingTime} min read</span>
+                <span className="text-[13px] text-[var(--text-dim)]">· {post.wordCount.toLocaleString()} words</span>
               </div>
 
-              {/* Keywords */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+              <div className="flex flex-wrap gap-2 mt-4">
                 {post.keywords.slice(0, 5).map(kw => (
-                  <span key={kw} style={{
-                    fontSize: '12px', padding: '3px 8px', borderRadius: '4px',
-                    border: '1px solid var(--color-border-tertiary)',
-                    color: 'var(--color-text-secondary)',
-                  }}>
+                  <span key={kw} className="text-[11px] px-2.5 py-1 rounded-lg"
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}>
                     {kw}
                   </span>
                 ))}
               </div>
             </header>
 
-            {/* Article content — rendered as HTML from Claude */}
+            {/* Content */}
             <div
               className="blog-content"
-              style={{
-                lineHeight: 1.8,
-                fontSize: '16px',
-                color: 'var(--color-text-primary)',
-              }}
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
-            {/* Tool links */}
+            {/* Tools mentioned */}
             {post.toolSlugs.length > 0 && (
-              <div style={{
-                marginTop: '40px', padding: '24px', borderRadius: '12px',
-                background: 'var(--color-background-secondary)',
-                border: '1px solid var(--color-border-tertiary)',
-              }}>
-                <h3 style={{ margin: '0 0 16px', fontSize: '16px' }}>
-                  Tools mentioned in this article
-                </h3>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div className="mt-10 p-6 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <h3 className="text-[var(--text)] font-bold text-[15px] mb-4">Tools mentioned in this article</h3>
+                <div className="flex gap-3 flex-wrap">
                   {post.toolSlugs.map(slug => (
-                    <Link
-                      key={slug}
-                      href={`/tools/${slug}`}
-                      style={{
-                        padding: '8px 16px', borderRadius: '8px',
-                        border: '1px solid var(--color-border-secondary)',
-                        background: 'var(--color-background-primary)',
-                        textDecoration: 'none', color: 'var(--color-text-primary)',
-                        fontSize: '14px', fontWeight: 500,
-                      }}
-                    >
+                    <Link key={slug} href={`/tools/${slug}`}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                       View {slug} →
                     </Link>
                   ))}
@@ -171,57 +149,29 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </article>
 
           {/* Sidebar */}
-          <aside style={{ position: 'sticky', top: '24px' }}>
+          <aside className="flex flex-col gap-6" style={{ position: 'sticky', top: '80px', alignSelf: 'start' }}>
             {/* Compare CTA */}
-            <div style={{
-              padding: '24px', borderRadius: '12px',
-              background: '#3b82f6',
-              color: '#fff',
-              marginBottom: '24px',
-              textAlign: 'center',
-            }}>
-              <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#fff' }}>
-                Compare AI Tools
-              </h3>
-              <p style={{ margin: '0 0 16px', fontSize: '13px', opacity: 0.9 }}>
-                Find the perfect tool for your needs
-              </p>
-              <Link
-                href="/compare"
-                style={{
-                  display: 'block', padding: '10px', borderRadius: '8px',
-                  background: '#fff', color: '#3b82f6', textDecoration: 'none',
-                  fontWeight: 600, fontSize: '14px',
-                }}
-              >
+            <div className="rounded-2xl p-6 text-center"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>
+              <h3 className="font-bold text-[15px] mb-2" style={{ color: 'var(--bg)' }}>Compare AI Tools</h3>
+              <p className="text-[13px] mb-4 opacity-80" style={{ color: 'var(--bg)' }}>Find the perfect tool for your needs</p>
+              <Link href="/compare"
+                className="block py-2.5 rounded-xl font-semibold text-sm"
+                style={{ background: 'var(--bg)', color: 'var(--accent)' }}>
                 Compare Now →
               </Link>
             </div>
 
             {/* Related posts */}
             {related.length > 0 && (
-              <div style={{
-                padding: '20px', borderRadius: '12px',
-                border: '1px solid var(--color-border-tertiary)',
-                background: 'var(--color-background-secondary)',
-              }}>
-                <h3 style={{ margin: '0 0 16px', fontSize: '15px' }}>Related Articles</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <h3 className="text-[var(--text)] font-bold text-[14px] mb-4">Related Articles</h3>
+                <div className="flex flex-col gap-3">
                   {related.map(r => (
-                    <Link
-                      key={r.slug}
-                      href={`/blog/${r.slug}`}
-                      style={{ textDecoration: 'none', color: 'var(--color-text-primary)' }}
-                    >
-                      <div style={{
-                        padding: '12px', borderRadius: '8px',
-                        border: '1px solid var(--color-border-tertiary)',
-                        background: 'var(--color-background-primary)',
-                      }}>
-                        <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 500, lineHeight: 1.4 }}>
-                          {r.title}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                    <Link key={r.slug} href={`/blog/${r.slug}`} style={{ textDecoration: 'none' }}>
+                      <div className="p-3 rounded-xl" style={{ border: '1px solid var(--border)' }}>
+                        <p className="text-[var(--text)] text-[13px] font-medium leading-snug mb-1">{r.title}</p>
+                        <p className="text-[var(--text-dim)] text-[11px]">
                           {new Date(r.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                       </div>
@@ -230,36 +180,43 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 </div>
               </div>
             )}
+
+            {/* Back to blog */}
+            <Link href="/blog"
+              className="text-center py-3 rounded-xl text-[13px] font-semibold"
+              style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+              ← All Articles
+            </Link>
           </aside>
         </div>
       </main>
 
-      {/* Blog content styles */}
       <style>{`
-        .blog-content h1 { font-size: 2em; font-weight: 700; margin: 1.5em 0 0.5em; }
-        .blog-content h2 { font-size: 1.5em; font-weight: 600; margin: 2em 0 0.75em; padding-bottom: 0.3em; border-bottom: 1px solid var(--color-border-tertiary); }
-        .blog-content h3 { font-size: 1.2em; font-weight: 600; margin: 1.5em 0 0.5em; }
-        .blog-content p  { margin: 0 0 1.2em; }
+        .blog-content { color: var(--text-muted); line-height: 1.8; font-size: 15px; }
+        .blog-content h1 { font-size: 1.9em; font-weight: 800; margin: 1.5em 0 0.5em; color: var(--text); font-family: var(--font-mono); }
+        .blog-content h2 { font-size: 1.4em; font-weight: 700; margin: 2em 0 0.75em; color: var(--text); padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
+        .blog-content h3 { font-size: 1.15em; font-weight: 600; margin: 1.5em 0 0.5em; color: var(--text); }
+        .blog-content p { margin: 0 0 1.2em; }
         .blog-content ul, .blog-content ol { margin: 0 0 1.2em 1.5em; padding: 0; }
         .blog-content li { margin-bottom: 0.5em; }
         .blog-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 14px; }
-        .blog-content th { background: var(--color-background-secondary); padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid var(--color-border-tertiary); }
-        .blog-content td { padding: 9px 14px; border: 1px solid var(--color-border-tertiary); vertical-align: top; }
-        .blog-content tr:nth-child(even) td { background: var(--color-background-secondary); }
-        .blog-content a { color: #3b82f6; text-decoration: underline; }
-        .blog-content a:hover { text-decoration: none; }
-        .blog-content strong { font-weight: 600; }
-        .blog-content .quick-verdict, .blog-content .tldr-box, .blog-content .intro-box, .blog-content .intro-section { padding: 20px; border-radius: 10px; background: var(--color-background-secondary); border: 1px solid var(--color-border-tertiary); margin: 1.5em 0; }
+        .blog-content th { background: var(--bg-card); padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid var(--border); color: var(--text); }
+        .blog-content td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
+        .blog-content tr:nth-child(even) td { background: var(--bg-card); }
+        .blog-content a { color: var(--accent); text-decoration: underline; }
+        .blog-content strong { font-weight: 700; color: var(--text); }
+        .blog-content .quick-verdict, .blog-content .tldr-box, .blog-content .intro-section { padding: 20px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin: 1.5em 0; }
         .blog-content .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 1em 0 1.5em; }
-        .blog-content .pros { padding: 16px; border-radius: 8px; background: #10b98110; border: 1px solid #10b98130; }
-        .blog-content .cons { padding: 16px; border-radius: 8px; background: #ef444410; border: 1px solid #ef444430; }
-        .blog-content .faq-item { margin-bottom: 1.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--color-border-tertiary); }
+        .blog-content .pros { padding: 16px; border-radius: 8px; background: rgba(0,229,160,0.05); border: 1px solid rgba(0,229,160,0.2); }
+        .blog-content .cons { padding: 16px; border-radius: 8px; background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); }
+        .blog-content .faq-item { margin-bottom: 1.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--border); }
         .blog-content .faq-item:last-child { border-bottom: none; }
-        .blog-content .tool-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--color-text-secondary); margin: 0.5em 0 1em; }
-        .blog-content .quick-picks-box, .blog-content .quick-picks { padding: 16px 20px; border-radius: 8px; background: var(--color-background-secondary); border-left: 3px solid #3b82f6; margin: 1em 0 1.5em; }
-        .blog-content .toc { padding: 16px 20px; border-radius: 8px; background: var(--color-background-secondary); border: 1px solid var(--color-border-tertiary); margin: 1em 0 2em; font-size: 14px; }
+        .blog-content .tool-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin: 0.5em 0 1em; }
+        .blog-content .quick-picks-box, .blog-content .quick-picks { padding: 16px 20px; border-radius: 8px; background: var(--bg-card); border-left: 3px solid var(--accent); margin: 1em 0 1.5em; }
+        .blog-content .toc { padding: 16px 20px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 2em; font-size: 14px; }
         .blog-content .toc ol { margin: 0.5em 0 0 1.2em; }
-        .blog-content .toc li { margin-bottom: 4px; }
+        .blog-content .rating-display { font-size: 1.1em; margin: 0.5em 0; }
+        .blog-content .best-for, .blog-content .pricing-quick { font-size: 0.95em; margin: 0.5em 0; }
         @media (max-width: 768px) {
           .blog-content .pros-cons-grid { grid-template-columns: 1fr; }
         }

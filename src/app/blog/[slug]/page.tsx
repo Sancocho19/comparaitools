@@ -220,97 +220,73 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         /* ── Layout ── */
         .blog-layout {
           display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 48px;
+          grid-template-columns: minmax(0, 1fr) 280px;
+          gap: 56px;
           align-items: start;
         }
-        .blog-sidebar {
-          position: sticky;
-          top: 80px;
-        }
+        .blog-sidebar { position: sticky; top: 80px; }
         .blog-mobile-cta { display: none; }
 
         /* ── Content typography ── */
         .blog-content { color: var(--text-muted); line-height: 1.85; font-size: 16px; }
-        .blog-content h1 { font-size: 1.75em; font-weight: 800; margin: 1.4em 0 0.5em; color: var(--text); font-family: var(--font-mono); line-height: 1.2; }
-        .blog-content h2 { font-size: 1.35em; font-weight: 700; margin: 2em 0 0.7em; color: var(--text); padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
-        .blog-content h3 { font-size: 1.1em; font-weight: 600; margin: 1.5em 0 0.5em; color: var(--text); }
-        .blog-content p { margin: 0 0 1.2em; }
-        .blog-content ul, .blog-content ol { margin: 0 0 1.2em 1.5em; padding: 0; }
-        .blog-content li { margin-bottom: 0.5em; }
+        .blog-content h1 { font-size: 1.5em; font-weight: 700; margin: 0 0 0.6em; color: var(--text); line-height: 1.3; }
+        .blog-content h2 { font-size: 1.25em; font-weight: 700; margin: 1.8em 0 0.6em; color: var(--text); padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
+        .blog-content h3 { font-size: 1.1em; font-weight: 600; margin: 1.4em 0 0.4em; color: var(--text); }
+        .blog-content p { margin: 0 0 1.1em; }
+        .blog-content ul, .blog-content ol { margin: 0 0 1.1em 1.5em; padding: 0; }
+        .blog-content li { margin-bottom: 0.4em; }
         .blog-content a { color: var(--accent); text-decoration: underline; }
-        .blog-content a:hover { opacity: 0.8; }
         .blog-content strong { font-weight: 700; color: var(--text); }
-        .blog-content em { font-style: italic; }
 
         /* ── Tables ── */
-        .blog-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 14px; border-radius: 12px; overflow: hidden; }
-        .blog-content th { background: var(--bg-card); padding: 12px 16px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); color: var(--text); }
-        .blog-content td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
-        .blog-content tr:last-child td { border-bottom: none; }
+        .blog-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 14px; }
+        .blog-content th { background: var(--bg-card); padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid var(--border); color: var(--text); }
+        .blog-content td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
         .blog-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
 
         /* ── Boxes ── */
-        .blog-content .quick-verdict,
-        .blog-content .tldr-box,
-        .blog-content .intro-section,
-        .blog-content .intro-box {
-          padding: 24px; border-radius: 16px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          margin: 1.5em 0;
+        .blog-content .quick-verdict, .blog-content .tldr-box,
+        .blog-content .intro-section, .blog-content .intro-box {
+          padding: 20px 24px; border-radius: 14px;
+          background: var(--bg-card); border: 1px solid var(--border); margin: 1.5em 0;
         }
-        .blog-content .quick-picks-box,
-        .blog-content .quick-picks {
-          padding: 20px 24px; border-radius: 12px;
-          background: var(--bg-card);
-          border-left: 3px solid var(--accent);
-          margin: 1em 0 1.5em;
+        .blog-content .quick-picks-box, .blog-content .quick-picks {
+          padding: 16px 20px; border-radius: 10px;
+          background: var(--bg-card); border-left: 3px solid var(--accent); margin: 1em 0 1.5em;
         }
         .blog-content .toc {
-          padding: 20px 24px; border-radius: 12px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          margin: 1em 0 2em; font-size: 14px;
+          padding: 16px 20px; border-radius: 10px;
+          background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.8em; font-size: 14px;
         }
         .blog-content .toc ol { margin: 0.5em 0 0 1.2em; }
-        .blog-content .toc li { margin-bottom: 6px; }
+        .blog-content .toc li { margin-bottom: 5px; }
 
         /* ── Pros/Cons ── */
-        .blog-content .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 1em 0 1.5em; }
-        .blog-content .pros { padding: 18px; border-radius: 12px; background: rgba(0,229,160,0.04); border: 1px solid rgba(0,229,160,0.15); }
-        .blog-content .cons { padding: 18px; border-radius: 12px; background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); }
+        .blog-content .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 1em 0 1.5em; }
+        .blog-content .pros { padding: 16px; border-radius: 10px; background: rgba(0,229,160,0.04); border: 1px solid rgba(0,229,160,0.15); }
+        .blog-content .cons { padding: 16px; border-radius: 10px; background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); }
 
         /* ── FAQ ── */
-        .blog-content .faq-item { margin-bottom: 1.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--border); }
+        .blog-content .faq-item { margin-bottom: 1.4em; padding-bottom: 1.4em; border-bottom: 1px solid var(--border); }
         .blog-content .faq-item:last-child { border-bottom: none; }
-        .blog-content .faq-list { margin: 0; }
-
-        /* ── Misc ── */
-        .blog-content .tool-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin: 0.5em 0 1em; }
-        .blog-content .rating-display { font-size: 1.1em; margin: 0.5em 0; }
-        .blog-content .best-for, .blog-content .pricing-quick { font-size: 0.95em; margin: 0.5em 0; }
-        .blog-content .prerequisites { padding: 16px 20px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.5em; }
+        .blog-content .tool-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin: 0.4em 0 1em; }
+        .blog-content .rating-display { font-size: 1.05em; margin: 0.4em 0; }
+        .blog-content .best-for, .blog-content .pricing-quick { font-size: 0.94em; margin: 0.4em 0; }
+        .blog-content .prerequisites { padding: 14px 18px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); margin: 1em 0 1.5em; }
 
         /* ── Mobile ── */
         @media (max-width: 900px) {
-          .blog-layout {
-            grid-template-columns: 1fr;
-            gap: 0;
-          }
+          .blog-layout { grid-template-columns: 1fr; gap: 0; }
           .blog-sidebar { display: none; }
           .blog-mobile-cta { display: block; }
           .blog-content { font-size: 15px; }
-          .blog-content h1 { font-size: 1.5em; }
-          .blog-content h2 { font-size: 1.25em; }
+          .blog-content h1 { font-size: 1.35em; }
+          .blog-content h2 { font-size: 1.15em; }
           .blog-content .pros-cons-grid { grid-template-columns: 1fr; }
           .blog-content table { font-size: 13px; }
-          .blog-content th, .blog-content td { padding: 8px 10px; }
         }
-
         @media (max-width: 480px) {
           .blog-content { font-size: 14px; }
-          .blog-content h1 { font-size: 1.35em; }
           .blog-content table { display: block; overflow-x: auto; }
         }
       `}</style>

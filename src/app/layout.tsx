@@ -79,6 +79,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#0a0a0f" />
+	<meta name="google-site-verification" content="hpE6yggeCpp5GO9UF_2EJVLRZTP1iluds-D2dy_VxOU" />
         {/* JSON-LD Website Schema */}
         <script
           type="application/ld+json"

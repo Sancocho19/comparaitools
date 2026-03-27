@@ -3,12 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-// Generate all tool pages at build time (Static Site Generation)
 export async function generateStaticParams() {
   return tools.map((tool) => ({ slug: tool.slug }));
 }
 
-// Dynamic SEO metadata for each tool
 export async function generateMetadata({
   params,
 }: {
@@ -41,18 +39,15 @@ export default async function ToolPage({
   const tool = tools.find((t) => t.slug === slug);
   if (!tool) notFound();
 
-  // Find tools in same category for "alternatives"
   const alternatives = tools.filter(
     (t) => t.category === tool.category && t.id !== tool.id
   );
 
-  // Find comparison links
   const comparisons = alternatives.map((alt) => ({
     tool: alt,
     url: `/compare/${tool.slug}-vs-${alt.slug}`,
   }));
 
-  // FAQ data for schema
   const faqs = [
     {
       q: `Is ${tool.name} worth it in 2026?`,
@@ -70,7 +65,6 @@ export default async function ToolPage({
 
   return (
     <>
-      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -126,8 +120,7 @@ export default async function ToolPage({
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
               style={{
-                background:
-                  "linear-gradient(135deg, var(--accent), var(--purple))",
+                background: "linear-gradient(135deg, var(--accent), var(--purple))",
                 color: "var(--bg)",
               }}
             >
@@ -135,128 +128,80 @@ export default async function ToolPage({
             </div>
             <span
               className="font-extrabold text-lg"
-              style={{
-                fontFamily: "var(--font-mono)",
-                letterSpacing: "-0.5px",
-              }}
+              style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}
             >
               <span className="text-[var(--accent)]">Compar</span>
               <span className="text-[var(--text)]">AITools</span>
             </span>
           </Link>
           <div className="hidden md:flex gap-6 items-center">
-            <Link
-              href="/tools"
-              className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors"
-            >
-              Tools
-            </Link>
+            <Link href="/tools" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Tools</Link>
+            <Link href="/" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Compare</Link>
+            <Link href="/" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Blog</Link>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-[900px] mx-auto px-6 py-10 relative z-10">
+      <main className="max-w-[800px] mx-auto px-6 md:px-8 py-12 relative z-10">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] mb-6">
-          <Link href="/" className="hover:text-[var(--accent)]">
-            Home
-          </Link>
+        <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] mb-8">
+          <Link href="/" className="hover:text-[var(--accent)]">Home</Link>
           <span>/</span>
-          <Link href="/tools" className="hover:text-[var(--accent)]">
-            Tools
-          </Link>
+          <Link href="/tools" className="hover:text-[var(--accent)]">Tools</Link>
           <span>/</span>
-          <Link
-            href={`/category/${tool.category}`}
-            className="hover:text-[var(--accent)]"
-          >
-            {tool.categoryLabel}
-          </Link>
+          <Link href={`/category/${tool.category}`} className="hover:text-[var(--accent)]">{tool.categoryLabel}</Link>
           <span>/</span>
           <span className="text-[var(--text-muted)]">{tool.name}</span>
         </div>
 
-        {/* Tool Header */}
-        <div className="flex items-start gap-5 mb-8">
-          <span className="text-5xl">{tool.logo}</span>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1
-                className="text-3xl font-extrabold text-[var(--text)]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {tool.name}
-              </h1>
-              <span
-                className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                style={{
-                  background: tool.trend.startsWith("+")
-                    ? "rgba(0,229,160,0.1)"
-                    : "rgba(239,68,68,0.1)",
-                  color: tool.trend.startsWith("+")
-                    ? "var(--accent)"
-                    : "var(--red)",
-                }}
-              >
-                {tool.trend}
-              </span>
-            </div>
-            <p className="text-[var(--text-muted)] text-sm mt-1">
-              by {tool.company} · {tool.users} users · Updated{" "}
-              {tool.lastUpdated}
-            </p>
-            <div className="flex items-center gap-4 mt-3">
-              <span className="text-[var(--orange)] text-lg tracking-wider">
-                {"★".repeat(Math.floor(tool.rating))}
-                <span className="text-[var(--text-muted)] ml-1 text-sm">
-                  {tool.rating}/5
-                </span>
-              </span>
-              <span
-                className="text-[var(--accent)] font-semibold text-sm"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {tool.pricing}
-              </span>
-            </div>
+        {/* Tool Header - Centered */}
+        <div className="text-center mb-10">
+          <span className="text-6xl block mb-4">{tool.logo}</span>
+          <div className="flex items-center justify-center gap-3 flex-wrap mb-2">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text)]" style={{ fontFamily: "var(--font-mono)" }}>
+              {tool.name}
+            </h1>
+            <span
+              className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+              style={{
+                background: tool.trend.startsWith("+") ? "rgba(0,229,160,0.1)" : "rgba(239,68,68,0.1)",
+                color: tool.trend.startsWith("+") ? "var(--accent)" : "var(--red)",
+              }}
+            >
+              {tool.trend}
+            </span>
+          </div>
+          <p className="text-[var(--text-muted)] text-sm">
+            by {tool.company} · {tool.users} users · Updated {tool.lastUpdated}
+          </p>
+          <div className="flex items-center justify-center gap-4 mt-3">
+            <span className="text-[var(--orange)] text-lg tracking-wider">
+              {"★".repeat(Math.floor(tool.rating))}
+              <span className="text-[var(--text-muted)] ml-1 text-sm">{tool.rating}/5</span>
+            </span>
+            <span className="text-[var(--accent)] font-semibold text-sm" style={{ fontFamily: "var(--font-mono)" }}>
+              {tool.pricing}
+            </span>
           </div>
         </div>
 
         {/* Description */}
-        <div
-          className="rounded-2xl p-6 mb-6"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <p className="text-[var(--text-muted)] leading-relaxed">
-            {tool.longDescription}
-          </p>
-          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-            <span className="text-xs text-[var(--text-dim)] font-bold uppercase tracking-wider">
-              Best for:
-            </span>
-            <p className="text-[var(--text)] text-sm mt-1">{tool.bestFor}</p>
+        <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <p className="text-[var(--text-muted)] leading-relaxed text-[15px]">{tool.longDescription}</p>
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
+            <span className="text-xs text-[var(--text-dim)] font-bold uppercase tracking-wider">Best for:</span>
+            <p className="text-[var(--text)] text-sm mt-1.5">{tool.bestFor}</p>
           </div>
         </div>
 
         {/* Features */}
-        <div
-          className="rounded-2xl p-6 mb-6"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <h2 className="text-lg font-bold text-[var(--text)] mb-4">
-            Key Features
-          </h2>
+        <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <h2 className="text-lg font-bold text-[var(--text)] mb-4">Key Features</h2>
           <div className="flex flex-wrap gap-2">
             {tool.features.map((f, i) => (
               <span
                 key={i}
-                className="text-sm px-3 py-1.5 rounded-lg"
+                className="text-sm px-4 py-2 rounded-lg"
                 style={{
                   background: `${tool.color}15`,
                   color: `${tool.color}cc`,
@@ -271,71 +216,31 @@ export default async function ToolPage({
 
         {/* Pros & Cons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div
-            className="rounded-2xl p-6"
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <h2 className="text-lg font-bold text-[var(--accent)] mb-3">
-              ✓ Pros
-            </h2>
+          <div className="rounded-2xl p-6 md:p-8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <h2 className="text-lg font-bold text-[var(--accent)] mb-4">✓ Pros</h2>
             {tool.pros.map((p, i) => (
-              <p
-                key={i}
-                className="text-[var(--text-muted)] text-sm mb-2 pl-4"
-                style={{ borderLeft: "2px solid var(--accent)" }}
-              >
-                {p}
-              </p>
+              <p key={i} className="text-[var(--text-muted)] text-sm mb-3 pl-4" style={{ borderLeft: "2px solid var(--accent)" }}>{p}</p>
             ))}
           </div>
-          <div
-            className="rounded-2xl p-6"
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <h2 className="text-lg font-bold text-[var(--red)] mb-3">
-              ✗ Cons
-            </h2>
+          <div className="rounded-2xl p-6 md:p-8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <h2 className="text-lg font-bold text-[var(--red)] mb-4">✗ Cons</h2>
             {tool.cons.map((c, i) => (
-              <p
-                key={i}
-                className="text-[var(--text-muted)] text-sm mb-2 pl-4"
-                style={{ borderLeft: "2px solid var(--red)" }}
-              >
-                {c}
-              </p>
+              <p key={i} className="text-[var(--text-muted)] text-sm mb-3 pl-4" style={{ borderLeft: "2px solid var(--red)" }}>{c}</p>
             ))}
           </div>
         </div>
 
         {/* Comparisons */}
         {comparisons.length > 0 && (
-          <div
-            className="rounded-2xl p-6 mb-6"
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <h2 className="text-lg font-bold text-[var(--text)] mb-4">
-              Compare {tool.name} with Alternatives
-            </h2>
+          <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <h2 className="text-lg font-bold text-[var(--text)] mb-4">Compare {tool.name} with Alternatives</h2>
             <div className="flex flex-wrap gap-2">
               {comparisons.map((c) => (
                 <Link
                   key={c.tool.id}
                   href={c.url}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                  style={{
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-muted)",
-                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
                 >
                   {tool.logo} {tool.name} vs {c.tool.name} {c.tool.logo}
                 </Link>
@@ -345,39 +250,24 @@ export default async function ToolPage({
         )}
 
         {/* FAQ */}
-        <div
-          className="rounded-2xl p-6 mb-6"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <h2 className="text-lg font-bold text-[var(--text)] mb-4">
-            Frequently Asked Questions
-          </h2>
+        <div className="rounded-2xl p-6 md:p-8 mb-8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <h2 className="text-lg font-bold text-[var(--text)] mb-5">Frequently Asked Questions</h2>
           {faqs.map((faq, i) => (
-            <div key={i} className="mb-4 last:mb-0">
-              <h3 className="text-[var(--text)] text-sm font-bold mb-1">
-                {faq.q}
-              </h3>
-              <p className="text-[var(--text-muted)] text-sm leading-relaxed">
-                {faq.a}
-              </p>
+            <div key={i} className="mb-5 last:mb-0">
+              <h3 className="text-[var(--text)] text-[15px] font-bold mb-1.5">{faq.q}</h3>
+              <p className="text-[var(--text-muted)] text-sm leading-relaxed">{faq.a}</p>
             </div>
           ))}
         </div>
 
         {/* Visit CTA */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-10">
           <a
             href={tool.url}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
-            style={{
-              background: `linear-gradient(135deg, ${tool.color}, ${tool.color}cc)`,
-              color: "#fff",
-            }}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-sm transition-all hover:scale-105"
+            style={{ background: `linear-gradient(135deg, ${tool.color}, ${tool.color}cc)`, color: "#fff" }}
           >
             Visit {tool.name} →
           </a>

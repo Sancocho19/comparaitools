@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
         messages: [
           {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     if (data.error) {
-      return NextResponse.json({ error: data.error.message, type: data.error.type, keyPrefix: apiKey.substring(0, 20) }, { status: 500 });
+      return NextResponse.json({ error: data.error.message, type: data.error.type }, { status: 500 });
     }
 
     const text = data.content?.[0]?.text || 'No content';
@@ -50,9 +50,9 @@ export async function GET(request: NextRequest) {
       success: true,
       topic: topic,
       contentLength: text.length,
-      preview: text.substring(0, 200),
+      preview: text.substring(0, 300),
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message, keyPrefix: apiKey.substring(0, 20) }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

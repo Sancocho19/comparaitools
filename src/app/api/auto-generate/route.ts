@@ -138,6 +138,11 @@ CRITICAL RULES:
 
     await saveGenerationState(updatedState);
 
+    // Ping Google para indexación inmediata
+    try {
+      await fetch(`https://www.google.com/ping?sitemap=https://comparaitools.com/sitemap.xml`);
+    } catch {}
+
     return NextResponse.json({
       success:        true,
       slug,

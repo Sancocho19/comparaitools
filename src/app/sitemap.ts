@@ -7,6 +7,9 @@ import { MetadataRoute } from 'next';
 import tools from '@/data/tools.json';
 import { getManifest } from '@/lib/kv-storage';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const BASE_URL = 'https://comparaitools.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

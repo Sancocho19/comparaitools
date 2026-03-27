@@ -6,14 +6,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getPost, getManifest, getRelatedPosts } from '@/lib/kv-storage';
 
-export const revalidate = 3600;
-
-// ─── generateStaticParams — pre-render known slugs ───────────────────────────
-
-export async function generateStaticParams() {
-  const manifest = await getManifest();
-  return manifest.map(m => ({ slug: m.slug }));
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // ─── generateMetadata — SEO dinámico ─────────────────────────────────────────
 

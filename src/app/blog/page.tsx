@@ -25,6 +25,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   roundup:    { label: 'Best Of',     color: '#10b981' },
   guide:      { label: 'Guide',       color: '#f59e0b' },
   pricing:    { label: 'Pricing',     color: '#ef4444' },
+  opinion:    { label: 'Opinion',     color: '#f43f5e' },
 };
 
 function PostCard({ post }: { post: ManifestEntry }) {
@@ -95,6 +96,7 @@ export default async function BlogPage() {
   const comparisons = sorted.filter(p => p.type === 'comparison');
   const roundups    = sorted.filter(p => p.type === 'roundup');
   const guides      = sorted.filter(p => p.type === 'guide' || p.type === 'pricing');
+  const opinions    = sorted.filter(p => p.category === 'opinion');
 
   const schemaOrg = {
     '@context': 'https://schema.org',
@@ -146,12 +148,13 @@ export default async function BlogPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-5 gap-4 mb-12">
           {[
             { label: 'Reviews',      count: reviews.length,     color: '#00e5a0' },
             { label: 'Comparisons',  count: comparisons.length, color: '#a78bfa' },
             { label: 'Best-of Lists',count: roundups.length,    color: '#10b981' },
             { label: 'Guides',       count: guides.length,      color: '#f59e0b' },
+            { label: 'Opinions',     count: opinions.length,    color: '#f43f5e' },
           ].map(({ label, count, color }) => (
             <div key={label} className="text-center p-4 rounded-2xl"
               style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
@@ -169,9 +172,27 @@ export default async function BlogPage() {
           </div>
         ) : (
           <>
+            {/* Opinion/Trending — destacados arriba */}
+            {opinions.length > 0 && (
+              <>
+                <div className="flex items-center gap-3 mb-5">
+                  <h2 className="text-xl font-bold text-[var(--text)]">🔥 Trending Opinions</h2>
+                  <span className="text-[11px] px-2.5 py-1 rounded-full font-bold"
+                    style={{ background: 'rgba(244,63,94,0.1)', color: '#f43f5e', border: '1px solid rgba(244,63,94,0.2)' }}>
+                    HOT
+                  </span>
+                </div>
+                <div className="blog-grid mb-10">
+                  {opinions.slice(0, 3).map(post => (
+                    <PostCard key={post.slug} post={post} />
+                  ))}
+                </div>
+              </>
+            )}
+
             <h2 className="text-xl font-bold mb-6 text-[var(--text)]">Latest Articles</h2>
             <div className="blog-grid mb-12">
-              {sorted.map(post => (
+              {sorted.filter(p => p.category !== 'opinion').map(post => (
                 <PostCard key={post.slug} post={post} />
               ))}
             </div>

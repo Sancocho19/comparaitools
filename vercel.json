@@ -9,6 +9,10 @@
       "schedule": "0 18 * * *"
     },
     {
+      "path": "/api/trending-article?secret=comparaitools-secret-2026-xyz",
+      "schedule": "0 12 * * *"
+    },
+    {
       "path": "/api/discover-tools?secret=comparaitools-secret-2026-xyz&approve=true",
       "schedule": "0 10 * * 1"
     }

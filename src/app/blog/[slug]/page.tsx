@@ -126,6 +126,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     ],
   };
 
+  // ── SANITIZAR CONTENT ────────────────────────────────────────────────────
+  // El motor de contenido inyecta <script type="application/ld+json"> dentro
+  // del HTML del artículo. Esos schemas incompletos (sin author, itemReviewed,
+  // mainEntity) causan errores en Google Search Console.
+  // Eliminamos todos los JSON-LD embebidos: el schema correcto ya esta en
+  // enrichedSchema + breadcrumbSchema arriba.
+  const sanitizedContent = post.content.replace(
+    /<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
+    ''
+  );
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <>
       {/* Schema enriquecido con author + itemReviewed */}
@@ -220,7 +232,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
 
           {/* Content */}
-          <article className="blog-content" dangerouslySetInnerHTML={{ __html: post.content }} />
+          <article className="blog-content" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
 
           {/* Tools mentioned */}
           {post.toolSlugs.length > 0 && (

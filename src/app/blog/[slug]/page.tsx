@@ -132,10 +132,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   // mainEntity) causan errores en Google Search Console.
   // Eliminamos todos los JSON-LD embebidos: el schema correcto ya esta en
   // enrichedSchema + breadcrumbSchema arriba.
-  const sanitizedContent = post.content.replace(
-    /<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
-    ''
-  );
+  const sanitizedContent = post.content
+    // 1. Eliminar JSON-LD scripts embebidos dentro del HTML del post
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
+    // 2. Parchear FAQPage microdata existente: añadir itemprop="mainEntity" a Question divs
+    //    Posts generados antes del fix no tienen este atributo — Google lo exige
+    .replace(
+      /(<div[^>]*?)itemscope(\s[^>]*?)?itemtype=["']https:\/\/schema\.org\/Question["']([^>]*>)/gi,
+      (match: string) => match.includes('itemprop=') ? match : match.replace('itemscope', 'itemprop="mainEntity" itemscope')
+    );
   // ─────────────────────────────────────────────────────────────────────────
 
   return (

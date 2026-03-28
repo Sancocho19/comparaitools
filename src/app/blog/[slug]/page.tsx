@@ -61,15 +61,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const baseSchema = (post.schemaOrg ?? {}) as Record<string, unknown>;
   const isReviewType = ['review', 'comparison', 'pricing'].includes(post.type);
 
+  // reviewRating: si ya existe en Redis lo usamos (puede tener rating real como 4.8)
+  // pero lo reemplazamos si el @type no es Rating (dato incorrecto)
+  const existingRating = baseSchema['reviewRating'] as Record<string, unknown> | undefined;
+  const safeRating = existingRating?.['@type'] === 'Rating'
+    ? existingRating
+    : { '@type': 'Rating', ratingValue: '4.5', bestRating: '5', worstRating: '1' };
+
   const enrichedSchema = {
-    // Spread de lo que ya genera el motor de contenido
+    // Spread base — conserva name, description, url, etc.
     ...baseSchema,
 
-    // Forzar @type Review en artículos de tipo review/comparison/pricing
+    // @type: siempre Review para reviews (forzado)
     '@type': isReviewType ? 'Review' : (baseSchema['@type'] ?? 'Article'),
 
-    // CAMPO OBLIGATORIO 1: author
-    author: baseSchema['author'] ?? {
+    // CAMPO OBLIGATORIO 1: author — SIEMPRE Person, ignoramos el "Thing" de Redis
+    author: {
       '@type': 'Person',
       name: 'Alex Morgan',
       url: 'https://comparaitools.com/about',
@@ -79,9 +86,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       ],
     },
 
-    // CAMPO OBLIGATORIO 2: itemReviewed (solo para reviews)
+    // CAMPO OBLIGATORIO 2: itemReviewed — SIEMPRE presente en reviews
     ...(isReviewType && {
-      itemReviewed: baseSchema['itemReviewed'] ?? {
+      itemReviewed: {
         '@type': 'SoftwareApplication',
         name: toolName,
         applicationCategory: 'WebApplication',
@@ -89,18 +96,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       },
     }),
 
-    // reviewRating también requerido si @type es Review
-    ...(isReviewType && {
-      reviewRating: baseSchema['reviewRating'] ?? {
-        '@type': 'Rating',
-        ratingValue: '4.5',
-        bestRating: '5',
-        worstRating: '1',
-      },
-    }),
+    // reviewRating: usar el de Redis si es válido, sino default
+    ...(isReviewType && { reviewRating: safeRating }),
 
     // publisher siempre presente (E-E-A-T)
-    publisher: baseSchema['publisher'] ?? {
+    publisher: {
       '@type': 'Organization',
       name: 'ComparAITools',
       url: 'https://comparaitools.com',

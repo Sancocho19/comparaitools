@@ -30,8 +30,13 @@ export const metadata: Metadata = {
     "AI tool reviews",
     "AI software comparison",
   ],
-  authors: [{ name: "ComparAITools" }],
-  creator: "ComparAITools",
+  authors: [{ name: "Alex Morgan", url: "https://twitter.com/alexmorgan_ai" }],
+  creator: "Alex Morgan",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -53,6 +58,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ComparAITools - Compare Every AI Tool",
     description: "Side-by-side AI tool comparisons with real data.",
+    creator: "@alexmorgan_ai",
+    site: "@alexmorgan_ai",
   },
   robots: {
     index: true,
@@ -78,7 +85,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico" />
         <meta name="theme-color" content="#0a0a0f" />
         <meta name="google-site-verification" content="hpE6yggeCpp5GO9UF_2EJVLRZTP1iluds-D2dy_VxOU" />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-DZWL8K43V0"></script>
@@ -92,6 +100,15 @@ export default function RootLayout({
               name: "ComparAITools",
               url: "https://comparaitools.com",
               description: "Compare AI tools side-by-side with real data",
+              author: {
+                "@type": "Person",
+                name: "Alex Morgan",
+                url: "https://comparaitools.com/about",
+                sameAs: [
+                  "https://twitter.com/alexmorgan_ai",
+                  "https://linkedin.com/in/alexmorganai",
+                ],
+              },
               potentialAction: {
                 "@type": "SearchAction",
                 target: "https://comparaitools.com/tools?q={search_term_string}",
@@ -104,7 +121,7 @@ export default function RootLayout({
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
 
-        {/* ── FOOTER ── */}
+        {/* FOOTER */}
         <footer style={{
           borderTop: '1px solid var(--border)',
           marginTop: '80px',
@@ -136,8 +153,11 @@ export default function RootLayout({
                     <span style={{ color: 'var(--text)' }}>AITools</span>
                   </span>
                 </Link>
-                <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '240px', margin: '0 0 16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '240px', margin: '0 0 12px' }}>
                   The definitive AI tools comparison platform. Expert reviews and data-driven insights, updated daily.
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: '0 0 12px' }}>
+                  By <Link href="/about" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Alex Morgan</Link> · AI Tools Analyst
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
                   © {new Date().getFullYear()} ComparAITools. All rights reserved.
@@ -158,8 +178,7 @@ export default function RootLayout({
                     { label: 'AI Search', href: '/category/search' },
                     { label: 'Video & Audio', href: '/category/video' },
                   ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}
-                      className="hover:text-[var(--accent)] transition-colors">
+                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
                       {label}
                     </Link>
                   ))}
@@ -176,17 +195,16 @@ export default function RootLayout({
                     { label: 'Blog', href: '/blog' },
                     { label: 'Compare Tools', href: '/compare' },
                     { label: 'About Us', href: '/about' },
-                    { label: 'Newsletter', href: '/about#newsletter' },
+                    { label: 'Contact', href: '/about#contact' },
                   ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}
-                      className="hover:text-[var(--accent)] transition-colors">
+                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
                       {label}
                     </Link>
                   ))}
                 </div>
               </div>
 
-              {/* Legal — CRÍTICO PARA ADSENSE */}
+              {/* Legal */}
               <div>
                 <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: '0 0 14px' }}>
                   Legal
@@ -197,10 +215,8 @@ export default function RootLayout({
                     { label: 'Terms of Service', href: '/terms' },
                     { label: 'Cookie Policy', href: '/privacy#cookies' },
                     { label: 'Affiliate Disclosure', href: '/privacy#affiliate' },
-                    { label: 'Contact Us', href: '/about#contact' },
                   ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}
-                      className="hover:text-[var(--accent)] transition-colors">
+                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
                       {label}
                     </Link>
                   ))}
@@ -222,10 +238,13 @@ export default function RootLayout({
               <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>
                 Disclosure: We may earn affiliate commissions from links on this site. This does not affect our editorial independence.
               </p>
-              <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <a href="https://twitter.com/alexmorgan_ai" target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>𝕏 Twitter</a>
+                <a href="https://linkedin.com/in/alexmorganai" target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>LinkedIn</a>
                 <Link href="/privacy" style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>Privacy</Link>
                 <Link href="/terms" style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>Terms</Link>
-                <Link href="/about" style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>Contact</Link>
               </div>
             </div>
 

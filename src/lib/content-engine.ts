@@ -419,7 +419,7 @@ MINIMUM 1,800 words of actual content
 <article itemscope itemtype="https://schema.org/Review">
 <meta itemprop="datePublished" content="${new Date().toISOString()}"/>
 <meta itemprop="dateModified" content="${new Date().toISOString()}"/>
-<meta itemprop="author" content="comparaitools.com Expert Team"/>
+<meta itemprop="author" content="Alex Morgan"/>
 
 <div class="last-updated" style="font-size:13px;color:#888;margin-bottom:1em">
   <strong>Last Updated:</strong> ${TODAY} · <strong>Testing Period:</strong> 2 weeks · <strong>Our Rating:</strong> ${tool.rating}/5
@@ -499,27 +499,27 @@ ${tool.cons.map(c => `<li><strong>${c.split(' ').slice(0,3).join(' ')}:</strong>
 
 <div class="faq-item" itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is ${tool.name} free to use in ${YEAR}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer about ${tool.pricing} — mention exactly what you get free vs paid]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer about ${tool.pricing} — mention exactly what you get free vs paid]</p></div>
 </div>
 
 <div class="faq-item" itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is ${tool.name} worth it in ${YEAR}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear answer based on our testing. For whom yes, for whom no. Reference rating ${tool.rating}/5.]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear answer based on our testing. For whom yes, for whom no. Reference rating ${tool.rating}/5.]</p></div>
 </div>
 
 <div class="faq-item" itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">What is ${tool.name} best used for?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer from our testing: best use cases, specific results we achieved]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer from our testing: best use cases, specific results we achieved]</p></div>
 </div>
 
 <div class="faq-item" itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">How does ${tool.name} compare to its competitors?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Brief comparison with links to detailed comparisons: ${compareLinks}]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Brief comparison with links to detailed comparisons: ${compareLinks}]</p></div>
 </div>
 
 <div class="faq-item" itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">What are the best ${tool.name} alternatives?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Top 3 alternatives with one line on when to pick each: ${toolLinks}]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Top 3 alternatives with one line on when to pick each: ${toolLinks}]</p></div>
 </div>
 
 </div>
@@ -643,27 +643,27 @@ OUTPUT: ONLY HTML <article>...</article>. MINIMUM 2,000 words.
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is ${toolA.name} better than ${toolB.name} in ${YEAR}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Nuanced answer with specific use case guidance. Reference our testing.]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Nuanced answer with specific use case guidance. Reference our testing.]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Can I use both ${toolA.name} and ${toolB.name} together?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Practical workflow answer]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Practical workflow answer]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Which is cheaper: ${toolA.name} or ${toolB.name}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific pricing comparison with exact numbers]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific pricing comparison with exact numbers]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Which is better for beginners: ${toolA.name} or ${toolB.name}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear beginner recommendation with reasons from our testing]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear beginner recommendation with reasons from our testing]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Should I switch from ${toolB.name} to ${toolA.name}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[When yes, when no, what the migration looks like]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[When yes, when no, what the migration looks like]</p></div>
 </div>
 
 </div>
@@ -780,27 +780,27 @@ ${catTools.map(t => `<tr><td><a href="/tools/${t.slug}">${t.logo} ${t.name}</a><
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">What is the best free ${categoryLabel.toLowerCase()} AI tool in ${YEAR}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer from our testing — name the best free option and what you get]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer from our testing — name the best free option and what you get]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Which ${categoryLabel.toLowerCase()} AI tool is best for beginners?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear recommendation with reasons from our testing]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Clear recommendation with reasons from our testing]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">What is the best ${categoryLabel.toLowerCase()} AI for business use?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Business-focused recommendation with specific features that matter]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Business-focused recommendation with specific features that matter]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">How much does a good ${categoryLabel.toLowerCase()} AI tool cost?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Price range from our testing, what you get at each tier]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Price range from our testing, what you get at each tier]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is there a free alternative to [top tool in list]?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about free alternatives and their trade-offs]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about free alternatives and their trade-offs]</p></div>
 </div>
 
 </div>
@@ -900,17 +900,17 @@ ${alternatives.map(a => `<tr><td><a href="/tools/${a.slug}">${a.name}</a></td><t
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">What is the best free alternative to ${tool.name}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer with the best free option from our alternatives list]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer with the best free option from our alternatives list]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is there a cheaper alternative to ${tool.name}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Price comparison with the most affordable alternative]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Price comparison with the most affordable alternative]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">How do I switch from ${tool.name} to an alternative?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Practical 3-step migration guide]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Practical 3-step migration guide]</p></div>
 </div>
 
 </div>
@@ -1094,27 +1094,27 @@ ${competitors.map(c => `<tr><td><a href="/tools/${c.slug}">${c.name}</a></td><td
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">How much does ${tool.name} cost per month in ${YEAR}?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific pricing: ${tool.pricing}. What each tier includes from our testing.]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific pricing: ${tool.pricing}. What each tier includes from our testing.]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is ${tool.name} free?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about free tier from our experience]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about free tier from our experience]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Can I cancel ${tool.name} anytime?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Cancellation policy details from our experience subscribing]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Cancellation policy details from our experience subscribing]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Does ${tool.name} offer a student discount?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about student/nonprofit pricing]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Honest answer about student/nonprofit pricing]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">Is ${tool.name} cheaper than [top competitor]?</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific price comparison with context from our testing]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific price comparison with context from our testing]</p></div>
 </div>
 
 </div>
@@ -1370,17 +1370,17 @@ OUTPUT: ONLY clean semantic HTML <article>...</article>. NO markdown. Minimum 1,
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">[Direct question version of the article's main controversy]</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Direct 2-3 sentence answer]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Direct 2-3 sentence answer]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">[Follow-up question readers will have]</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer with recommendation]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Specific answer with recommendation]</p></div>
 </div>
 
 <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
 <h3 itemprop="name">[Practical "what should I do" question]</h3>
-<div itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Actionable answer]</p></div>
+<div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text">[Actionable answer]</p></div>
 </div>
 
 </div>

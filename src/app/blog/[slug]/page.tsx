@@ -135,11 +135,25 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const sanitizedContent = post.content
     // 1. Eliminar JSON-LD scripts embebidos dentro del HTML del post
     .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
-    // 2. Parchear FAQPage microdata existente: añadir itemprop="mainEntity" a Question divs
-    //    Posts generados antes del fix no tienen este atributo — Google lo exige
+
+    // 2. Quitar Review microdata del <article> embebido en el content
+    //    (tenemos nuestro propio JSON-LD correcto en el <head>)
+    .replace(/(<article)([^>]*?)itemscope([^>]*?)itemtype=["']https:\/\/schema\.org\/Review["']([^>]*?>)/gi,
+      (_m: string, tag: string, b: string, _c: string, d: string) => `${tag}${b}${d}`)
+    // Eliminar meta itemprop embebidos del Review viejo
+    .replace(/<meta\s+itemprop=["'](datePublished|author|dateModified)["'][^>]*\/>/gi, '')
+
+    // 3. FAQPage: añadir itemprop="mainEntity" a Question divs que no lo tengan
     .replace(
-      /(<div[^>]*?)itemscope(\s[^>]*?)?itemtype=["']https:\/\/schema\.org\/Question["']([^>]*>)/gi,
+      /(<div[^>]*?)itemscope([^>]*?)itemtype=["']https:\/\/schema\.org\/Question["']([^>]*?>)/gi,
       (match: string) => match.includes('itemprop=') ? match : match.replace('itemscope', 'itemprop="mainEntity" itemscope')
+    )
+
+    // 4. FAQPage: añadir itemprop="acceptedAnswer" a Answer divs que no lo tengan
+    //    Google exige este campo para validar FAQPage rich snippets
+    .replace(
+      /(<div[^>]*?)itemscope([^>]*?)itemtype=["']https:\/\/schema\.org\/Answer["']([^>]*?>)/gi,
+      (match: string) => match.includes('itemprop=') ? match : match.replace('itemscope', 'itemprop="acceptedAnswer" itemscope')
     );
   // ─────────────────────────────────────────────────────────────────────────
 

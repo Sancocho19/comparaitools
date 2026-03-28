@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         tools: [{
           type: 'web_search_20250305',
           name: 'web_search',
-          max_uses: 5,
+          max_uses: 3,
         }],
         system: `You are an AI tools research analyst AND SEO strategist.
 Search the web for trending AI tool news, then identify the BEST SEO opportunity from what you find.
@@ -136,6 +136,9 @@ Use web search to find real data, then return ONLY the JSON object.`,
       return NextResponse.json({ success: true, message: 'Already published', slug });
     }
 
+    // Esperar 3 segundos para no exceder rate limit
+    await new Promise(r => setTimeout(r, 3000));
+
     // ─── PASO 2: Construir internal links dinámicos ───────────────────────────
     // Links a tool pages mencionadas
     const toolLinks = (research.tools_mentioned || [])
@@ -185,7 +188,7 @@ Use web search to find real data, then return ONLY the JSON object.`,
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4000,
+        max_tokens: 3000,
         system: `You are Alex Morgan, founder of comparaitools.com and senior AI tools analyst with 5+ years of hands-on experience.
 You write bold, opinionated, data-driven articles that rank on Google AND generate real debate and shares.
 

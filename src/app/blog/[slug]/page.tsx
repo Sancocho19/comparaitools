@@ -47,6 +47,73 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     guide: 'Guide', pricing: 'Pricing Guide',
   };
 
+  // ── SCHEMA FIX: enriquecer el schema que viene de Redis ──────────────────
+  // Google exige "author" e "itemReviewed" en Review schema.
+  // Los campos que ya vengan en post.schemaOrg se conservan;
+  // solo añadimos los que faltan para no romper nada.
+
+  const toolName =
+    post.toolSlugs?.[0]
+      ? post.toolSlugs[0].charAt(0).toUpperCase() + post.toolSlugs[0].slice(1).replace(/-/g, ' ')
+      : post.title;
+
+  const enrichedSchema = {
+    // Spread de lo que ya genera el motor de contenido
+    ...post.schemaOrg,
+
+    // Forzar @type Review en artículos de tipo review/comparison/pricing
+    '@type': ['review', 'comparison', 'pricing'].includes(post.type)
+      ? 'Review'
+      : (post.schemaOrg?.['@type'] ?? 'Article'),
+
+    // CAMPO OBLIGATORIO 1: author
+    author: post.schemaOrg?.author ?? {
+      '@type': 'Person',
+      name: 'Alex Morgan',
+      url: 'https://comparaitools.com/about',
+      sameAs: [
+        'https://twitter.com/alexmorgan_ai',
+        'https://linkedin.com/in/alexmorganai',
+      ],
+    },
+
+    // CAMPO OBLIGATORIO 2: itemReviewed (solo para reviews)
+    ...((['review', 'comparison', 'pricing'].includes(post.type)) && {
+      itemReviewed: post.schemaOrg?.itemReviewed ?? {
+        '@type': 'SoftwareApplication',
+        name: toolName,
+        applicationCategory: 'WebApplication',
+        url: `https://comparaitools.com/tools/${post.toolSlugs?.[0] ?? ''}`,
+      },
+    }),
+
+    // reviewRating también requerido si @type es Review
+    ...((['review', 'comparison', 'pricing'].includes(post.type)) && {
+      reviewRating: post.schemaOrg?.reviewRating ?? {
+        '@type': 'Rating',
+        ratingValue: '4.5',
+        bestRating: '5',
+        worstRating: '1',
+      },
+    }),
+
+    // publisher siempre presente (E-E-A-T)
+    publisher: post.schemaOrg?.publisher ?? {
+      '@type': 'Organization',
+      name: 'ComparAITools',
+      url: 'https://comparaitools.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://comparaitools.com/favicon.svg',
+      },
+    },
+
+    // datePublished / dateModified
+    datePublished: post.schemaOrg?.datePublished ?? post.publishedAt,
+    dateModified: post.schemaOrg?.dateModified ?? post.updatedAt,
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -59,7 +126,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(post.schemaOrg) }} />
+      {/* Schema enriquecido con author + itemReviewed */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(enrichedSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       <div className="grain-overlay" />

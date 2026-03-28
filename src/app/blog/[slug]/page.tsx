@@ -111,6 +111,34 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <span className="text-[13px]" style={{ color: 'var(--text-dim)' }}>· {post.wordCount.toLocaleString()} words</span>
           </div>
 
+          {/* Author byline — E-E-A-T signal for Google */}
+          <div className="flex items-center gap-3 mb-8 p-4 rounded-2xl"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>
+              AM
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link href="/about" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', textDecoration: 'none' }}>
+                  Alex Morgan
+                </Link>
+                <span className="text-[11px] px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(0,229,160,0.1)', color: 'var(--accent)', border: '1px solid rgba(0,229,160,0.2)' }}>
+                  AI Tools Analyst
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: '2px 0 0' }}>
+                Founder of ComparAITools · <a href="https://twitter.com/alexmorgan_ai" target="_blank" rel="noopener noreferrer"
+                  style={{ color: 'var(--accent)', textDecoration: 'none' }}>@alexmorgan_ai</a>
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Last updated:</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>{publishDate}</span>
+            </div>
+          </div>
+
           {/* Keywords */}
           <div className="flex flex-wrap gap-2 mb-8">
             {post.keywords.slice(0, 6).map(kw => (

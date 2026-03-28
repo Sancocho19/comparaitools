@@ -57,17 +57,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       ? post.toolSlugs[0].charAt(0).toUpperCase() + post.toolSlugs[0].slice(1).replace(/-/g, ' ')
       : post.title;
 
+  // Cast a Record para que TypeScript permita acceso por clave dinámica
+  const baseSchema = (post.schemaOrg ?? {}) as Record<string, unknown>;
+  const isReviewType = ['review', 'comparison', 'pricing'].includes(post.type);
+
   const enrichedSchema = {
     // Spread de lo que ya genera el motor de contenido
-    ...post.schemaOrg,
+    ...baseSchema,
 
     // Forzar @type Review en artículos de tipo review/comparison/pricing
-    '@type': ['review', 'comparison', 'pricing'].includes(post.type)
-      ? 'Review'
-      : (post.schemaOrg?.['@type'] ?? 'Article'),
+    '@type': isReviewType ? 'Review' : (baseSchema['@type'] ?? 'Article'),
 
     // CAMPO OBLIGATORIO 1: author
-    author: post.schemaOrg?.author ?? {
+    author: baseSchema['author'] ?? {
       '@type': 'Person',
       name: 'Alex Morgan',
       url: 'https://comparaitools.com/about',
@@ -78,8 +80,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     },
 
     // CAMPO OBLIGATORIO 2: itemReviewed (solo para reviews)
-    ...((['review', 'comparison', 'pricing'].includes(post.type)) && {
-      itemReviewed: post.schemaOrg?.itemReviewed ?? {
+    ...(isReviewType && {
+      itemReviewed: baseSchema['itemReviewed'] ?? {
         '@type': 'SoftwareApplication',
         name: toolName,
         applicationCategory: 'WebApplication',
@@ -88,8 +90,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     }),
 
     // reviewRating también requerido si @type es Review
-    ...((['review', 'comparison', 'pricing'].includes(post.type)) && {
-      reviewRating: post.schemaOrg?.reviewRating ?? {
+    ...(isReviewType && {
+      reviewRating: baseSchema['reviewRating'] ?? {
         '@type': 'Rating',
         ratingValue: '4.5',
         bestRating: '5',
@@ -98,7 +100,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     }),
 
     // publisher siempre presente (E-E-A-T)
-    publisher: post.schemaOrg?.publisher ?? {
+    publisher: baseSchema['publisher'] ?? {
       '@type': 'Organization',
       name: 'ComparAITools',
       url: 'https://comparaitools.com',
@@ -109,8 +111,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     },
 
     // datePublished / dateModified
-    datePublished: post.schemaOrg?.datePublished ?? post.publishedAt,
-    dateModified: post.schemaOrg?.dateModified ?? post.updatedAt,
+    datePublished: baseSchema['datePublished'] ?? post.publishedAt,
+    dateModified: baseSchema['dateModified'] ?? post.updatedAt,
   };
   // ─────────────────────────────────────────────────────────────────────────
 

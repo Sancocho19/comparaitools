@@ -124,9 +124,9 @@ function AdSlot({ size = "banner" }: { size?: "banner" | "native" }) {
     <div className={`w-full max-w-[728px] mx-auto my-8 sm:my-10 ${size === "banner" ? "h-[70px] sm:h-[90px]" : "h-[90px] sm:h-[120px]"} rounded-lg flex items-center justify-center`}
       style={{ border: "1px dashed var(--border)", background: "linear-gradient(135deg, var(--bg-card), var(--bg))", color: "var(--text-dim)", fontSize: "12px", fontFamily: "var(--font-mono)" }}>
       <div className="text-center">
-        <div className="text-[10px] opacity-50 mb-1">AD PLACEMENT</div>
-        <div className="text-[11px]">{size === "banner" ? "728×90 Leaderboard" : "Native Ad Unit"}</div>
-        <div className="text-[9px] mt-0.5 opacity-40 hidden sm:block">Mediavine · Raptive · AdThrive · Ezoic</div>
+        <div className="text-[10px] opacity-50 mb-1"></div>
+        <div className="text-[11px]">{size === "banner" ? "COMPARE" : "Native Ad Unit"}</div>
+        <div className="text-[9px] mt-0.5 opacity-40 hidden sm:block"></div>
       </div>
     </div>
   );

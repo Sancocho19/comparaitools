@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ComparAITools — search-backed refactor
 
-## Getting Started
+This refactor changes the project from a persona-based content generator into a research-backed publishing system for AI tool pages.
 
-First, run the development server:
+## What changed
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- unified tool source of truth with static JSON + optional Upstash overlay
+- secure cron endpoints using `Authorization: Bearer <CRON_SECRET>`
+- automatic content generation backed by live web search
+- no fake founder persona and no invented `we tested it` claims
+- canonical comparison URLs (`/compare/tool-a-vs-tool-b`)
+- cleaner sitemap generation and cache headers
+- blog pages now show visible research sources
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Required environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and fill in:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `CRON_SECRET`
+- `ANTHROPIC_API_KEY`
+- one search provider:
+  - `SEARCH_PROVIDER=tavily` + `TAVILY_API_KEY`
+  - or `SEARCH_PROVIDER=serpapi` + `SERPAPI_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
-## Learn More
+## Cron setup on Vercel
 
-To learn more about Next.js, take a look at the following resources:
+This project expects Vercel cron jobs to hit:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `GET /api/auto-generate`
+- `GET /api/discover-tools?approve=true`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Per Vercel docs, if you set `CRON_SECRET`, Vercel sends `Authorization: Bearer <CRON_SECRET>` automatically.
 
-## Deploy on Vercel
+## Recommended immediate actions
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Rotate any secrets that were previously committed or uploaded.
+2. Delete `.env.local`, `.next`, `.git`, and `node_modules` from deployment uploads.
+3. Connect Search Console and analytics before scaling content volume.
+4. Start by generating a small number of pages and review output quality.
+5. Only expand clusters that show impressions, CTR, and conversions.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Content model philosophy
+
+The goal is not to pause automation. The goal is to make automation honest:
+
+- search gathers current facts
+- structured product data supplies base fields
+- prompts synthesize tradeoffs and buying advice
+- pages expose research basis instead of pretending first-hand tests
+
+## Next recommended layer
+
+For a stronger production stack, add:
+
+- a proper database instead of Redis-only overlays
+- claim-level freshness timestamps for pricing/features
+- Search Console driven pruning + refresh jobs
+- a custom page score for thin content and duplicate intent
+- manual upgrade workflow for the top 20 revenue pages

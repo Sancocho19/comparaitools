@@ -10,7 +10,7 @@ import { getAllTools, bootstrapStaticTools } from "@/lib/tools-storage";
 
 export const metadata: Metadata = {
   title: "Compare AI Tools Side by Side (2026) | ComparAITools",
-  description: "Compare any two AI tools head-to-head. Pricing, features, ratings & real user data. ChatGPT vs Claude, Midjourney vs DALL-E, and 50+ comparisons.",
+  description: "Compare any two AI tools head-to-head. Pricing, features, ratings & real user data. ChatGPT vs Claude, Midjourney vs DALL-E, and comparison pages.",
   alternates: { canonical: "https://comparaitools.com/compare" },
   openGraph: {
     title: "Compare AI Tools Side by Side | ComparAITools",
@@ -129,7 +129,7 @@ export default async function ComparePage() {
                 {pairs.map(({ toolA, toolB }) => (
                   <Link
                     key={`${toolA.slug}-${toolB.slug}`}
-                    href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}-2026`}
+                    href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}`}
                     className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
                     style={{ background: "var(--bg-card)", border: "1px solid var(--border)", textDecoration: "none" }}
                   >
@@ -166,7 +166,7 @@ export default async function ComparePage() {
             {crossCat.slice(0, 12).map(({ toolA, toolB }) => (
               <Link
                 key={`${toolA.slug}-${toolB.slug}`}
-                href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}-2026`}
+                href={`/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}`}
                 className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
                 style={{ background: "var(--bg-card)", border: "1px solid var(--border)", textDecoration: "none" }}
               >

@@ -10,11 +10,11 @@ import { getAllTools, bootstrapStaticTools } from "@/lib/tools-storage";
 
 export const metadata: Metadata = {
   title: "All AI Tools 2026 — Reviews, Pricing & Comparisons | ComparAITools",
-  description: "Browse 50+ AI tools reviewed and rated. Find the best AI tools by category — chatbots, image generators, coding assistants, and more. Updated 2026.",
+  description: "Browse AI tools reviewed and rated. Find the best AI tools by category — chatbots, image generators, coding assistants, and more. Updated 2026.",
   alternates: { canonical: "https://comparaitools.com/tools" },
   openGraph: {
     title: "All AI Tools 2026 | ComparAITools",
-    description: "50+ AI tools reviewed, rated, and compared. Find the best AI tool for your needs.",
+    description: "AI tools reviewed, rated, and compared. Find the best AI tool for your needs.",
     type: "website",
   },
 };

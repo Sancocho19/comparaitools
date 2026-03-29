@@ -177,7 +177,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {pairs.map(({ a, b }) => (
                 <Link key={`${a.slug}-${b.slug}`}
-                  href={`/compare/${[a.slug, b.slug].sort().join('-vs-')}-2026`}
+                  href={`/compare/${[a.slug, b.slug].sort().join('-vs-')}`}
                   className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)", textDecoration: "none" }}>
                   <div className="flex items-center gap-3">

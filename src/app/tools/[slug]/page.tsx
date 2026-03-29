@@ -61,7 +61,7 @@ export default async function ToolPage({
 
   const comparisons = alternatives.map(alt => ({
     tool: alt,
-    url: `/compare/${[tool.slug, alt.slug].sort().join('-vs-')}-2026`,
+    url: `/compare/${[tool.slug, alt.slug].sort().join('-vs-')}`,
   }));
 
   const description    = cleanText(tool.description);

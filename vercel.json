@@ -1,45 +1,38 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/auto-generate?secret=comparaitools-secret-2026-xyz",
+      "path": "/api/auto-generate",
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/auto-generate?secret=comparaitools-secret-2026-xyz",
-      "schedule": "0 18 * * *"
-    },
-    {
-      "path": "/api/trending-article?secret=comparaitools-secret-2026-xyz",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/discover-tools?secret=comparaitools-secret-2026-xyz&approve=true",
+      "path": "/api/discover-tools?approve=true",
       "schedule": "0 10 * * 1"
     }
   ],
   "headers": [
     {
-      "source": "/blog/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
-    },
-    {
       "source": "/api/search",
       "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=60, stale-while-revalidate=300" }
+        { "key": "Cache-Control", "value": "public, max-age=60, s-maxage=60, stale-while-revalidate=300" }
       ]
     },
     {
       "source": "/tools/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }
       ]
     },
     {
-      "source": "/sitemap.xml",
+      "source": "/blog/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/compare/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" }
       ]
     }
   ]

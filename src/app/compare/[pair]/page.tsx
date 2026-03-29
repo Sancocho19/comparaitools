@@ -1,265 +1,132 @@
-// src/app/compare/[pair]/page.tsx
-// Lee de Redis — soporta tools estáticas y descubiertas dinámicamente
+import Link from 'next/link';
+import { Metadata } from 'next';
+import { notFound, permanentRedirect } from 'next/navigation';
+import SearchBar from '@/components/SearchBar';
+import { SITE_URL } from '@/lib/site';
+import { getAllTools, getTool } from '@/lib/tools-storage';
+import { buildCompareSlug, parseCompareSlug, stripHtml } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
-import tools from "@/data/tools.json";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import SearchBar from "@/components/SearchBar";
-import { getTool, getAllTools, bootstrapStaticTools } from "@/lib/tools-storage";
-
-function clean(text: any): string {
-  if (!text || typeof text !== 'string') return '';
-  return text.replace(/<cite[^>]*>[\s\S]*?<\/cite>/gi, '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+export async function generateMetadata({ params }: { params: Promise<{ pair: string }> }): Promise<Metadata> {
+  const { pair } = await params;
+  const { slugA, slugB } = parseCompareSlug(pair);
+  const [toolA, toolB] = await Promise.all([getTool(slugA), getTool(slugB)]);
+  if (!toolA || !toolB) return { title: 'Comparison not found' };
+  const canonicalPath = `/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`;
+  return {
+    title: `${toolA.name} vs ${toolB.name}: Pricing, Fit, and Tradeoffs`,
+    description: `Compare ${toolA.name} and ${toolB.name} with pricing, strengths, best-fit scenarios, and the tradeoffs that matter before you choose.`,
+    alternates: { canonical: `${SITE_URL}${canonicalPath}` },
+  };
 }
 
-function CompRow({ label, valA, valB, highlight }: {
-  label: string; valA: React.ReactNode; valB: React.ReactNode; highlight?: "a" | "b" | null
-}) {
+function compareScore(a: number, b: number): 'a' | 'b' | null {
+  return a > b ? 'a' : b > a ? 'b' : null;
+}
+
+function Row({ label, a, b, winner }: { label: string; a: React.ReactNode; b: React.ReactNode; winner?: 'a' | 'b' | null }) {
   return (
-    <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] text-sm"
-      style={{ borderBottom: "1px solid var(--border)" }}>
-      <div className="p-3 md:p-4 text-[var(--text-muted)] font-semibold text-xs"
-        style={{ fontFamily: "var(--font-mono)" }}>{label}</div>
-      <div className="p-3 md:p-4 text-center"
-        style={{ color: highlight === "a" ? "var(--accent)" : "var(--text)", fontWeight: highlight === "a" ? 700 : 400 }}>{valA}</div>
-      <div className="p-3 md:p-4 text-center"
-        style={{ color: highlight === "b" ? "var(--accent)" : "var(--text)", fontWeight: highlight === "b" ? 700 : 400 }}>{valB}</div>
+    <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] text-sm" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="p-3 md:p-4 text-[var(--text-muted)] font-semibold text-xs" style={{ fontFamily: 'var(--font-mono)' }}>{label}</div>
+      <div className="p-3 md:p-4 text-center" style={{ color: winner === 'a' ? 'var(--accent)' : 'var(--text)', fontWeight: winner === 'a' ? 700 : 400 }}>{a}</div>
+      <div className="p-3 md:p-4 text-center" style={{ color: winner === 'b' ? 'var(--accent)' : 'var(--text)', fontWeight: winner === 'b' ? 700 : 400 }}>{b}</div>
     </div>
   );
 }
 
-// Parse pair slug — handles "chatgpt-vs-claude-2026" and "chatgpt-vs-claude"
-function parsePair(pair: string): { slugA: string; slugB: string } {
-  // Remove trailing year if present
-  const cleaned = pair.replace(/-\d{4}$/, '');
-  const vsIdx   = cleaned.indexOf('-vs-');
-  if (vsIdx === -1) return { slugA: '', slugB: '' };
-  return {
-    slugA: cleaned.slice(0, vsIdx),
-    slugB: cleaned.slice(vsIdx + 4),
-  };
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ pair: string }> }): Promise<Metadata> {
-  const { pair } = await params;
-  const { slugA, slugB } = parsePair(pair);
-
-  await bootstrapStaticTools();
-  const toolA = await getTool(slugA);
-  const toolB = await getTool(slugB);
-  if (!toolA || !toolB) return { title: "Comparison Not Found" };
-
-  return {
-    title: `${toolA.name} vs ${toolB.name} (2026) - Which is Better? | ComparAITools`,
-    description: `Detailed comparison of ${toolA.name} vs ${toolB.name}. Compare pricing, features, ratings & more. ${toolA.name}: ${toolA.rating}/5, ${toolA.pricing}. ${toolB.name}: ${toolB.rating}/5, ${toolB.pricing}.`,
-    alternates: { canonical: `https://comparaitools.com/compare/${pair}` },
-    openGraph: {
-      title: `${toolA.name} vs ${toolB.name} (2026) | ComparAITools`,
-      description: `Head-to-head comparison: ${toolA.name} vs ${toolB.name}. Find out which is better for your needs.`,
-      type: "article",
-    },
-  };
-}
-
 export default async function ComparePage({ params }: { params: Promise<{ pair: string }> }) {
   const { pair } = await params;
-  const { slugA, slugB } = parsePair(pair);
-
-  await bootstrapStaticTools();
-  const toolA = await getTool(slugA);
-  const toolB = await getTool(slugB);
+  const { slugA, slugB, hadYearSuffix } = parseCompareSlug(pair);
+  const [toolA, toolB, allTools] = await Promise.all([getTool(slugA), getTool(slugB), getAllTools()]);
   if (!toolA || !toolB) notFound();
 
-  const winner = toolA.rating > toolB.rating ? toolA : toolB.rating > toolA.rating ? toolB : null;
+  const canonicalSlug = buildCompareSlug(toolA.slug, toolB.slug);
+  if (hadYearSuffix || pair !== canonicalSlug) {
+    permanentRedirect(`/compare/${canonicalSlug}`);
+  }
 
-  // Get all tools for "other comparisons" section
-  const allTools    = await getAllTools();
-  const sameCategory = allTools.filter(t =>
-    t.verified && t.category === toolA.category && t.slug !== toolA.slug && t.slug !== toolB.slug
-  ).slice(0, 4);
+  const sameCategory = allTools.filter((tool) => tool.category === toolA.category && ![toolA.slug, toolB.slug].includes(tool.slug)).slice(0, 4);
+  const verdict = toolA.rating === toolB.rating
+    ? `${toolA.name} and ${toolB.name} are close enough that your choice should come down to workflow and budget.`
+    : `${toolA.rating > toolB.rating ? toolA.name : toolB.name} is the stronger general pick right now, but the loser can still make more sense in a narrower workflow.`;
 
-  const descA = clean(toolA.description);
-  const descB = clean(toolB.description);
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: `${toolA.name} vs ${toolB.name}`,
+    description: verdict,
+    mainEntityOfPage: `${SITE_URL}/compare/${canonicalSlug}`,
+  };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: `${toolA.name} vs ${toolB.name} - Comparison 2026`,
-        mainEntity: {
-          "@type": "ItemList",
-          itemListElement: [
-            { "@type": "SoftwareApplication", name: toolA.name, position: 1 },
-            { "@type": "SoftwareApplication", name: toolB.name, position: 2 },
-          ],
-        },
-      })}} />
-
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <div className="grain-overlay" />
-
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: "rgba(10,10,15,0.9)", borderBottom: "1px solid var(--border)" }}>
+      <nav className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: 'rgba(10,10,15,0.9)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
-              style={{ background: "linear-gradient(135deg, var(--accent), var(--purple))", color: "var(--bg)" }}>C</div>
-            <span className="font-extrabold text-lg hidden sm:block" style={{ fontFamily: "var(--font-mono)", letterSpacing: "-0.5px" }}>
-              <span className="text-[var(--accent)]">Compar</span><span className="text-[var(--text)]">AITools</span>
-            </span>
-          </Link>
+          <Link href="/" className="flex items-center gap-2 shrink-0"><div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black" style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>C</div><span className="font-extrabold text-lg hidden sm:block" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '-0.5px' }}><span className="text-[var(--accent)]">Compar</span><span className="text-[var(--text)]">AITools</span></span></Link>
           <div className="flex-1 hidden md:block"><SearchBar /></div>
-          <div className="hidden md:flex gap-6 items-center shrink-0">
-            <Link href="/tools" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Tools</Link>
-            <Link href="/compare" className="text-[var(--accent)] text-[13px] font-medium">Compare</Link>
-            <Link href="/blog" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)] transition-colors">Blog</Link>
-          </div>
+          <div className="hidden md:flex gap-6 items-center shrink-0"><Link href="/tools" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)]">Tools</Link><Link href="/compare" className="text-[var(--accent)] text-[13px] font-medium">Compare</Link><Link href="/blog" className="text-[var(--text-muted)] text-[13px] font-medium hover:text-[var(--accent)]">Blog</Link></div>
         </div>
       </nav>
 
       <main className="max-w-[900px] mx-auto px-6 md:px-8 py-12 relative z-10">
-
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] mb-8 flex-wrap">
-          <Link href="/" className="hover:text-[var(--accent)]">Home</Link>
-          <span>/</span>
-          <Link href="/compare" className="hover:text-[var(--accent)]">Compare</Link>
-          <span>/</span>
-          <span className="text-[var(--text-muted)]">{toolA.name} vs {toolB.name}</span>
-        </div>
-
-        {/* Header */}
+        <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] mb-8 flex-wrap"><Link href="/" className="hover:text-[var(--accent)]">Home</Link><span>/</span><Link href="/compare" className="hover:text-[var(--accent)]">Compare</Link><span>/</span><span className="text-[var(--text-muted)]">{toolA.name} vs {toolB.name}</span></div>
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text)] mb-3">
-            {toolA.logo} {toolA.name} vs {toolB.name} {toolB.logo}
-          </h1>
-          <p className="text-[var(--text-muted)] text-sm max-w-[500px] mx-auto">
-            Complete side-by-side comparison updated for 2026. Which {toolA.categoryLabel.toLowerCase()} is right for you?
-          </p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text)] mb-3">{toolA.logo} {toolA.name} vs {toolB.logo} {toolB.name}</h1>
+          <p className="text-[var(--text-muted)] text-sm max-w-[650px] mx-auto">A cleaner buying decision: pricing, product fit, and the tradeoffs that matter more than generic feature lists.</p>
         </div>
 
-        {/* Quick verdict */}
-        {winner && (
-          <div className="rounded-2xl p-5 mb-8 text-center"
-            style={{ background: "rgba(0,229,160,0.05)", border: "1px solid rgba(0,229,160,0.15)" }}>
-            <span className="text-sm text-[var(--accent)] font-bold">
-              🏆 Quick Verdict: {winner.name} edges ahead with a {winner.rating}/5 rating
-              {winner.trend.startsWith("+") && ` and ${winner.trend} growth trend`}
-            </span>
-          </div>
-        )}
-
-        {/* Comparison table */}
-        <div className="rounded-2xl overflow-hidden mb-8" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-          <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] text-sm"
-            style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-            <div className="p-4 font-bold text-[var(--text-dim)] text-xs uppercase tracking-wider"
-              style={{ fontFamily: "var(--font-mono)" }}>Criteria</div>
-            <div className="p-4 text-center">
-              <span className="text-2xl block">{toolA.logo}</span>
-              <div className="font-bold text-[var(--text)] mt-1">{toolA.name}</div>
-            </div>
-            <div className="p-4 text-center">
-              <span className="text-2xl block">{toolB.logo}</span>
-              <div className="font-bold text-[var(--text)] mt-1">{toolB.name}</div>
-            </div>
-          </div>
-          <CompRow label="Rating"
-            valA={`${"★".repeat(Math.floor(toolA.rating))} ${toolA.rating}`}
-            valB={`${"★".repeat(Math.floor(toolB.rating))} ${toolB.rating}`}
-            highlight={toolA.rating > toolB.rating ? "a" : toolB.rating > toolA.rating ? "b" : null} />
-          <CompRow label="Pricing" valA={toolA.pricing} valB={toolB.pricing} />
-          <CompRow label="Users" valA={toolA.users} valB={toolB.users} />
-          <CompRow label="Company" valA={toolA.company} valB={toolB.company} />
-          <CompRow label="Growth" valA={toolA.trend} valB={toolB.trend}
-            highlight={parseFloat(toolA.trend) > parseFloat(toolB.trend) ? "a" : parseFloat(toolB.trend) > parseFloat(toolA.trend) ? "b" : null} />
-          <CompRow label="Top Feature"
-            valA={clean(toolA.features?.[0] ?? '')}
-            valB={clean(toolB.features?.[0] ?? '')} />
-          <CompRow label="Best For"
-            valA={clean(toolA.bestFor)}
-            valB={clean(toolB.bestFor)} />
+        <div className="rounded-2xl p-5 mb-8 text-center" style={{ background: 'rgba(0,229,160,0.05)', border: '1px solid rgba(0,229,160,0.15)' }}>
+          <span className="text-sm text-[var(--accent)] font-bold">Quick take: {verdict}</span>
         </div>
 
-        {/* Feature cards */}
+        <div className="rounded-2xl overflow-hidden mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="grid grid-cols-[140px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] text-sm" style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
+            <div className="p-4 font-bold text-[var(--text-dim)] text-xs uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>Criteria</div>
+            <div className="p-4 text-center"><span className="text-2xl block">{toolA.logo}</span><div className="font-bold text-[var(--text)] mt-1">{toolA.name}</div></div>
+            <div className="p-4 text-center"><span className="text-2xl block">{toolB.logo}</span><div className="font-bold text-[var(--text)] mt-1">{toolB.name}</div></div>
+          </div>
+          <Row label="Rating" a={`${toolA.rating}/5`} b={`${toolB.rating}/5`} winner={compareScore(toolA.rating, toolB.rating)} />
+          <Row label="Pricing" a={toolA.pricing} b={toolB.pricing} />
+          <Row label="Users" a={toolA.users} b={toolB.users} />
+          <Row label="Best for" a={toolA.bestFor} b={toolB.bestFor} />
+          <Row label="Momentum" a={toolA.trend} b={toolB.trend} winner={compareScore(parseFloat(toolA.trend), parseFloat(toolB.trend))} />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {[toolA, toolB].map((tool) => (
-            <div key={tool.slug} className="rounded-2xl p-6 md:p-7"
-              style={{ background: "var(--bg-card)", border: `1px solid ${tool.slug === winner?.slug ? "var(--accent)" : "var(--border)"}` }}>
-              <h3 className="text-lg font-bold text-[var(--text)] mb-4">{tool.logo} {tool.name}</h3>
-              <div className="space-y-2.5 mb-4">
-                {(tool.features || []).slice(0, 5).map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                    <span className="text-[var(--accent)]">→</span> {clean(f)}
-                  </div>
-                ))}
-              </div>
-              <div className="pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-                <h4 className="text-xs font-bold text-[var(--accent)] mb-2">Pros</h4>
-                {(tool.pros || []).slice(0, 2).map((p, i) => (
-                  <p key={i} className="text-[var(--text-muted)] text-xs mb-1.5">✓ {clean(p)}</p>
-                ))}
-                <h4 className="text-xs font-bold text-[var(--red,#ef4444)] mt-3 mb-2">Cons</h4>
-                {(tool.cons || []).slice(0, 2).map((c, i) => (
-                  <p key={i} className="text-[var(--text-muted)] text-xs mb-1.5">✗ {clean(c)}</p>
-                ))}
+            <div key={tool.slug} className="rounded-2xl p-6 md:p-7" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <h2 className="text-lg font-bold text-[var(--text)] mb-4">{tool.logo} {tool.name}</h2>
+              <p className="text-[var(--text-muted)] text-sm leading-6 mb-4">{stripHtml(tool.longDescription || tool.description)}</p>
+              <div className="space-y-2.5 mb-4">{tool.features.slice(0, 5).map((feature) => <div key={feature} className="flex items-center gap-2 text-sm text-[var(--text-muted)]"><span className="text-[var(--accent)]">→</span>{feature}</div>)}</div>
+              <div className="pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                <h3 className="text-xs font-bold text-[var(--accent)] mb-2">Pros</h3>
+                {tool.pros.slice(0, 3).map((item) => <p key={item} className="text-[var(--text-muted)] text-xs mb-1.5">✓ {item}</p>)}
+                <h3 className="text-xs font-bold text-[var(--red,#ef4444)] mt-3 mb-2">Cons</h3>
+                {tool.cons.slice(0, 3).map((item) => <p key={item} className="text-[var(--text-muted)] text-xs mb-1.5">✗ {item}</p>)}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Description comparison */}
-        {(descA || descB) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {[{ tool: toolA, desc: descA }, { tool: toolB, desc: descB }].map(({ tool, desc }) => (
-              desc ? (
-                <div key={tool.slug} className="rounded-2xl p-5"
-                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-                  <h3 className="font-bold text-[var(--text)] mb-2 text-sm">About {tool.name}</h3>
-                  <p className="text-[var(--text-muted)] text-[13px] leading-relaxed">{desc}</p>
-                </div>
-              ) : null
-            ))}
-          </div>
-        )}
-
-        {/* Review links */}
-        <div className="flex gap-4 justify-center flex-wrap mb-8">
-          {[toolA, toolB].map((tool) => (
-            <Link key={tool.slug} href={`/tools/${tool.slug}`}
-              className="px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text)" }}>
-              Read Full {tool.name} Review →
-            </Link>
-          ))}
+        <div className="rounded-2xl p-6 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <h2 className="text-lg font-bold text-[var(--text)] mb-3">How to choose between them</h2>
+          <ul className="text-[var(--text-muted)] text-sm leading-7 list-disc pl-5 space-y-2">
+            <li>Choose <strong>{toolA.name}</strong> when the top priority is {toolA.bestFor.toLowerCase()}.</li>
+            <li>Choose <strong>{toolB.name}</strong> when the top priority is {toolB.bestFor.toLowerCase()}.</li>
+            <li>If price sensitivity matters more than ecosystem depth, compare the free and entry plans carefully before you switch.</li>
+            <li>Look at switching costs too: saved prompts, integrations, and team habits can matter more than one flashy feature.</li>
+          </ul>
         </div>
 
-        {/* Blog review link */}
-        <div className="rounded-2xl p-5 mb-8 text-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-          <p className="text-[var(--text-muted)] text-sm mb-2">Want an in-depth analysis?</p>
-          <Link href={`/blog/${[slugA, slugB].sort().join('-vs-')}-2026`}
-            className="text-[var(--accent)] font-semibold text-sm hover:underline">
-            Read our full {toolA.name} vs {toolB.name} comparison →
-          </Link>
-        </div>
-
-        {/* Other tools in category */}
         {sameCategory.length > 0 && (
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-            <h3 className="font-bold text-[var(--text)] mb-4 text-sm">
-              Other {toolA.categoryLabel} Tools to Consider
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {sameCategory.map(t => (
-                <Link key={t.slug} href={`/tools/${t.slug}`}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-105"
-                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                  {t.logo} {t.name} ★{t.rating}
-                </Link>
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-[var(--text)] mb-4">More comparisons in {toolA.categoryLabel}</h2>
+            <div className="flex flex-wrap gap-3">
+              {sameCategory.map((tool) => (
+                <Link key={tool.slug} href={`/compare/${buildCompareSlug(toolA.slug, tool.slug)}`} className="px-4 py-2 rounded-xl text-[13px] font-semibold" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>{toolA.name} vs {tool.name}</Link>
               ))}
             </div>
           </div>

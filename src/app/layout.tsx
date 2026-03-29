@@ -1,65 +1,39 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
-import Link from "next/link";
-import "./globals.css";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import './globals.css';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 
 const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: '--font-space-grotesk',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: '--font-jetbrains',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "ComparAITools - Compare Every AI Tool Side by Side | 2026",
-    template: "%s | ComparAITools",
+    default: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Compare AI tools side-by-side with real data, pricing, features & ratings. ChatGPT vs Claude vs Gemini and 50+ tools. Updated daily.",
-  keywords: [
-    "AI tools comparison",
-    "compare AI tools",
-    "best AI tools 2026",
-    "ChatGPT vs Claude",
-    "AI tool reviews",
-    "AI software comparison",
-  ],
-  authors: [{ name: "Alex Morgan", url: "https://twitter.com/alexmorgan_ai" }],
-  creator: "Alex Morgan",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
-  },
+  description: SITE_DESCRIPTION,
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://comparaitools.com",
-    siteName: "ComparAITools",
-    title: "ComparAITools - Compare Every AI Tool Side by Side",
-    description:
-      "Real-time AI tool comparisons with data-driven insights. Find the perfect AI tool for your needs.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "ComparAITools - AI Tool Comparison Platform",
-      },
-    ],
+    type: 'website',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
+    description: SITE_DESCRIPTION,
   },
   twitter: {
-    card: "summary_large_image",
-    title: "ComparAITools - Compare Every AI Tool",
-    description: "Side-by-side AI tool comparisons with real data.",
-    creator: "@alexmorgan_ai",
-    site: "@alexmorgan_ai",
+    card: 'summary_large_image',
+    title: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
@@ -67,52 +41,37 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
     },
   },
-  alternates: {
-    canonical: "https://comparaitools.com",
+  alternates: { canonical: SITE_URL },
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
         <meta name="theme-color" content="#0a0a0f" />
-        <meta name="google-site-verification" content="hpE6yggeCpp5GO9UF_2EJVLRZTP1iluds-D2dy_VxOU" />
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DZWL8K43V0"></script>
-        <script dangerouslySetInnerHTML={{__html:`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-DZWL8K43V0');`}}/>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "ComparAITools",
-              url: "https://comparaitools.com",
-              description: "Compare AI tools side-by-side with real data",
-              author: {
-                "@type": "Person",
-                name: "Alex Morgan",
-                url: "https://comparaitools.com/about",
-                sameAs: [
-                  "https://twitter.com/alexmorgan_ai",
-                  "https://linkedin.com/in/alexmorganai",
-                ],
-              },
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: SITE_NAME,
+              url: SITE_URL,
+              description: SITE_DESCRIPTION,
               potentialAction: {
-                "@type": "SearchAction",
-                target: "https://comparaitools.com/tools?q={search_term_string}",
-                "query-input": "required name=search_term_string",
+                '@type': 'SearchAction',
+                target: `${SITE_URL}/tools?q={search_term_string}`,
+                'query-input': 'required name=search_term_string',
               },
             }),
           }}
@@ -120,137 +79,49 @@ export default function RootLayout({
       </head>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
-
-        {/* FOOTER */}
-        <footer style={{
-          borderTop: '1px solid var(--border)',
-          marginTop: '80px',
-          padding: '48px 24px 32px',
-          background: 'var(--bg)',
-        }}>
+        <footer style={{ borderTop: '1px solid var(--border)', marginTop: '72px', padding: '48px 24px 32px', background: 'var(--bg)' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-
-            {/* Top: logo + columns */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr 1fr',
-              gap: '40px',
-              marginBottom: '40px',
-            }}>
-
-              {/* Brand */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '40px', marginBottom: '32px' }}>
               <div>
                 <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '32px', height: '32px', borderRadius: '8px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '14px', fontWeight: 900,
-                    background: 'linear-gradient(135deg, var(--accent), var(--purple))',
-                    color: 'var(--bg)',
-                  }}>C</div>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 900, background: 'linear-gradient(135deg, var(--accent), var(--purple))', color: 'var(--bg)' }}>C</div>
                   <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '16px', letterSpacing: '-0.5px' }}>
                     <span style={{ color: 'var(--accent)' }}>Compar</span>
                     <span style={{ color: 'var(--text)' }}>AITools</span>
                   </span>
                 </Link>
-                <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '240px', margin: '0 0 12px' }}>
-                  The definitive AI tools comparison platform. Expert reviews and data-driven insights, updated daily.
+                <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '280px', margin: '0 0 12px' }}>
+                  A research-led AI software directory built around live search, verified pricing snapshots, and practical buying advice.
                 </p>
-                <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: '0 0 12px' }}>
-                  By <Link href="/about" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Alex Morgan</Link> · AI Tools Analyst
-                </p>
-                <p style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-                  © {new Date().getFullYear()} ComparAITools. All rights reserved.
-                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>© {new Date().getFullYear()} {SITE_NAME}. Editorially independent.</p>
               </div>
-
-              {/* Tools */}
-              <div>
-                <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: '0 0 14px' }}>
-                  Tools
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {[
-                    { label: 'All Tools', href: '/tools' },
-                    { label: 'Chatbots', href: '/category/chatbot' },
-                    { label: 'Image Generation', href: '/category/image' },
-                    { label: 'Code Assistants', href: '/category/code' },
-                    { label: 'AI Search', href: '/category/search' },
-                    { label: 'Video & Audio', href: '/category/video' },
-                  ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Resources */}
-              <div>
-                <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: '0 0 14px' }}>
-                  Resources
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {[
-                    { label: 'Blog', href: '/blog' },
-                    { label: 'Compare Tools', href: '/compare' },
-                    { label: 'About Us', href: '/about' },
-                    { label: 'Contact', href: '/about#contact' },
-                  ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Legal */}
-              <div>
-                <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: '0 0 14px' }}>
-                  Legal
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {[
-                    { label: 'Privacy Policy', href: '/privacy' },
-                    { label: 'Terms of Service', href: '/terms' },
-                    { label: 'Cookie Policy', href: '/privacy#cookies' },
-                    { label: 'Affiliate Disclosure', href: '/privacy#affiliate' },
-                  ].map(({ label, href }) => (
-                    <Link key={href} href={href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
+              <FooterColumn title="Explore" links={[
+                { href: '/tools', label: 'All tools' },
+                { href: '/compare', label: 'Comparisons' },
+                { href: '/blog', label: 'Blog' },
+                { href: '/about', label: 'Methodology' },
+              ]} />
+              <FooterColumn title="Popular clusters" links={[
+                { href: '/category/chatbot', label: 'Chatbots' },
+                { href: '/category/code', label: 'Coding tools' },
+                { href: '/category/image', label: 'Image tools' },
+                { href: '/category/video', label: 'Video tools' },
+              ]} />
+              <FooterColumn title="Legal" links={[
+                { href: '/privacy', label: 'Privacy' },
+                { href: '/terms', label: 'Terms' },
+              ]} />
             </div>
-
-            {/* Bottom bar */}
-            <div style={{
-              paddingTop: '24px',
-              borderTop: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-            }}>
+            <div style={{ paddingTop: '24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
               <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>
-                Disclosure: We may earn affiliate commissions from links on this site. This does not affect our editorial independence.
+                Some pages may include affiliate links. Rankings and verdicts are not sold and are not based on commissions.
               </p>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <a href="https://twitter.com/alexmorgan_ai" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>𝕏 Twitter</a>
-                <a href="https://linkedin.com/in/alexmorganai" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>LinkedIn</a>
-                <Link href="/privacy" style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>Privacy</Link>
-                <Link href="/terms" style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none' }}>Terms</Link>
-              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>
+                Live research assisted by search APIs and editorial prompts. Final responsibility stays with the publisher.
+              </p>
             </div>
-
           </div>
         </footer>
-
         <style>{`
           @media (max-width: 768px) {
             footer > div > div:first-child {
@@ -265,5 +136,20 @@ export default function RootLayout({
         `}</style>
       </body>
     </html>
+  );
+}
+
+function FooterColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+  return (
+    <div>
+      <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: '0 0 14px' }}>{title}</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {links.map((link) => (
+          <Link key={link.href} href={link.href} style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'none' }}>
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

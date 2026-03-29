@@ -1,205 +1,131 @@
-// src/lib/tools-storage.ts
-// Gestión dinámica de tools en Upstash Redis
-// Las tools nuevas descubiertas se guardan aquí, separadas de tools.json
-
-import { Redis } from '@upstash/redis';
 import baseTools from '@/data/tools.json';
+import { getRedis } from '@/lib/redis';
+import type { Tool } from '@/lib/types';
+import { uniqueBy } from '@/lib/utils';
 
-const redis = new Redis({
-  url:   process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export interface DynamicTool {
-  id:            string;
-  slug:          string;
-  name:          string;
-  company:       string;
-  category:      string;
-  categoryLabel: string;
-  pricing:       string;
-  pricingValue:  number;
-  rating:        number;
-  users:         string;
-  logo:          string;
-  color:         string;
-  features:      string[];
-  pros:          string[];
-  cons:          string[];
-  description:   string;
-  longDescription: string;
-  bestFor:       string;
-  lastUpdated:   string;
-  trend:         string;
-  url:           string;
-  source:        'static' | 'discovered'; // origen de la tool
-  discoveredAt?: string; // ISO string si fue descubierta automáticamente
-  verified:      boolean; // si fue validada antes de publicar
-}
-
-// ─── Keys Redis ───────────────────────────────────────────────────────────────
+const redis = getRedis();
 
 const K = {
-  TOOL:     (slug: string) => `cit:tool:${slug}`,
-  INDEX:    'cit:tools:index',      // lista de todos los slugs
-  PENDING:  'cit:tools:pending',    // tools descubiertas sin publicar
-  DISCOVERY:'cit:discovery:state',  // estado del discovery
+  TOOL: (slug: string) => `cit:tool:${slug}`,
+  INDEX: 'cit:tools:index',
+  PENDING: 'cit:tools:pending',
 };
 
-// ─── Bootstrap: cargar tools.json en Redis (primera vez) ─────────────────────
+function normalizeBaseTools(): Tool[] {
+  return (baseTools as Tool[]).map((tool) => ({
+    ...tool,
+    source: tool.source ?? 'static',
+    verified: tool.verified ?? true,
+    status: 'published',
+  }));
+}
 
 export async function bootstrapStaticTools(): Promise<void> {
+  if (!redis) return;
   const existing = await redis.get<string[]>(K.INDEX);
-  if (existing && existing.length > 0) return; // ya está inicializado
-
-  const staticTools = baseTools as DynamicTool[];
-  const slugs: string[] = [];
-
-  for (const tool of staticTools) {
-    const dynamicTool: DynamicTool = {
-      ...tool,
-      url:        tool.url ?? `https://${tool.slug}.com`,
-      source:     'static',
-      verified:   true,
-      discoveredAt: undefined,
-    };
-    await redis.set(K.TOOL(tool.slug), dynamicTool);
-    slugs.push(tool.slug);
+  if (existing?.length) return;
+  const tools = normalizeBaseTools();
+  for (const tool of tools) {
+    await redis.set(K.TOOL(tool.slug), tool);
   }
-
-  await redis.set(K.INDEX, slugs);
+  await redis.set(K.INDEX, tools.map((tool) => tool.slug));
 }
 
-// ─── Get all tools (static + dynamic) ────────────────────────────────────────
-
-export async function getAllTools(): Promise<DynamicTool[]> {
-  try {
-    // Intentar desde Redis
-    const slugs = await redis.get<string[]>(K.INDEX);
-    if (!slugs || slugs.length === 0) {
-      // Fallback a tools.json si Redis no está inicializado
-      return (baseTools as any[]).map(t => ({ ...t, source: 'static', verified: true }));
-    }
-
-    const tools = await Promise.all(slugs.map(s => redis.get<DynamicTool>(K.TOOL(s))));
-    return tools.filter(Boolean) as DynamicTool[];
-  } catch {
-    // Fallback a tools.json en caso de error
-    return (baseTools as any[]).map(t => ({ ...t, source: 'static', verified: true }));
-  }
+async function getRedisTools(): Promise<Tool[]> {
+  if (!redis) return [];
+  const slugs = (await redis.get<string[]>(K.INDEX)) ?? [];
+  if (!slugs.length) return [];
+  const items = await Promise.all(slugs.map((slug) => redis.get<Tool>(K.TOOL(slug))));
+  return items.filter(Boolean) as Tool[];
 }
 
-export async function getTool(slug: string): Promise<DynamicTool | null> {
-  try {
-    return await redis.get<DynamicTool>(K.TOOL(slug));
-  } catch {
-    const base = (baseTools as any[]).find(t => t.slug === slug);
-    return base ? { ...base, source: 'static', verified: true } : null;
-  }
+export async function getAllTools(): Promise<Tool[]> {
+  const staticTools = normalizeBaseTools();
+  const dynamicTools = await getRedisTools();
+  return uniqueBy(
+    [...staticTools, ...dynamicTools].filter((tool) => tool.verified !== false),
+    (tool) => tool.slug,
+  ).sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
 }
 
-export async function getToolsByCategory(category: string): Promise<DynamicTool[]> {
+export async function getTool(slug: string): Promise<Tool | null> {
   const all = await getAllTools();
-  return all.filter(t => t.category === category && t.verified);
+  return all.find((tool) => tool.slug === slug) ?? null;
+}
+
+export async function getToolsByCategory(category: string): Promise<Tool[]> {
+  const all = await getAllTools();
+  return all.filter((tool) => tool.category === category);
 }
 
 export async function getCategories(): Promise<{ category: string; categoryLabel: string; count: number }[]> {
   const all = await getAllTools();
   const map = new Map<string, { categoryLabel: string; count: number }>();
-
-  for (const t of all.filter(t => t.verified)) {
-    if (!map.has(t.category)) {
-      map.set(t.category, { categoryLabel: t.categoryLabel, count: 0 });
-    }
-    map.get(t.category)!.count++;
+  for (const tool of all) {
+    const current = map.get(tool.category) ?? { categoryLabel: tool.categoryLabel, count: 0 };
+    current.count += 1;
+    map.set(tool.category, current);
   }
-
-  return Array.from(map.entries()).map(([category, v]) => ({ category, ...v }));
+  return [...map.entries()]
+    .map(([category, value]) => ({ category, ...value }))
+    .sort((a, b) => b.count - a.count || a.categoryLabel.localeCompare(b.categoryLabel));
 }
 
-// ─── Save new tool ────────────────────────────────────────────────────────────
-
-export async function saveTool(tool: DynamicTool): Promise<void> {
-  await redis.set(K.TOOL(tool.slug), tool);
-
+export async function saveTool(tool: Tool): Promise<void> {
+  if (!redis) return;
+  const normalized: Tool = {
+    ...tool,
+    verified: tool.verified ?? true,
+    source: tool.source ?? 'discovered',
+    status: tool.status ?? 'published',
+  };
+  await redis.set(K.TOOL(normalized.slug), normalized);
   const slugs = (await redis.get<string[]>(K.INDEX)) ?? [];
-  if (!slugs.includes(tool.slug)) {
-    await redis.set(K.INDEX, [...slugs, tool.slug]);
+  if (!slugs.includes(normalized.slug)) {
+    await redis.set(K.INDEX, [...slugs, normalized.slug]);
   }
 }
 
-// ─── Pending tools (discovered but not yet verified) ─────────────────────────
-
-export async function addPendingTool(tool: Partial<DynamicTool>): Promise<void> {
-  const pending = (await redis.get<Partial<DynamicTool>[]>(K.PENDING)) ?? [];
-  const exists  = pending.some(p => p.slug === tool.slug);
-  if (!exists) {
-    await redis.set(K.PENDING, [...pending, tool]);
-  }
+export async function getPendingTools(): Promise<Tool[]> {
+  if (!redis) return [];
+  return (await redis.get<Tool[]>(K.PENDING)) ?? [];
 }
 
-export async function getPendingTools(): Promise<Partial<DynamicTool>[]> {
-  return (await redis.get<Partial<DynamicTool>[]>(K.PENDING)) ?? [];
+export async function addPendingTool(tool: Tool): Promise<void> {
+  if (!redis) return;
+  const pending = await getPendingTools();
+  if (pending.some((item) => item.slug === tool.slug)) return;
+  await redis.set(K.PENDING, [...pending, { ...tool, verified: false, status: 'pending' }]);
 }
 
 export async function approvePendingTool(slug: string): Promise<void> {
+  if (!redis) return;
   const pending = await getPendingTools();
-  const tool    = pending.find(p => p.slug === slug);
-  if (!tool) return;
-
-  const verified: DynamicTool = {
-    ...tool as DynamicTool,
-    verified:     true,
-    lastUpdated:  new Date().toISOString().split('T')[0],
-  };
-
-  await saveTool(verified);
-  await redis.set(K.PENDING, pending.filter(p => p.slug !== slug));
+  const match = pending.find((tool) => tool.slug === slug);
+  if (!match) return;
+  await saveTool({ ...match, verified: true, status: 'published', lastUpdated: new Date().toISOString().slice(0, 10) });
+  await redis.set(K.PENDING, pending.filter((tool) => tool.slug !== slug));
 }
 
-// ─── Discovery state ──────────────────────────────────────────────────────────
-
-export interface DiscoveryState {
-  lastRunAt:       string;
-  toolsDiscovered: number;
-  searchesRun:     string[];  // queries ya buscadas
-  totalAdded:      number;
-}
-
-export async function getDiscoveryState(): Promise<DiscoveryState> {
-  return (await redis.get<DiscoveryState>(K.DISCOVERY)) ?? {
-    lastRunAt:       '',
-    toolsDiscovered: 0,
-    searchesRun:     [],
-    totalAdded:      0,
-  };
-}
-
-export async function saveDiscoveryState(state: DiscoveryState): Promise<void> {
-  await redis.set(K.DISCOVERY, state);
-}
-
-// ─── Search (simple pero efectivo) ───────────────────────────────────────────
-
-export async function searchTools(query: string): Promise<DynamicTool[]> {
+export async function searchTools(query: string): Promise<Tool[]> {
+  const q = query.toLowerCase().trim();
   const all = await getAllTools();
-  const q   = query.toLowerCase().trim();
-
-  if (!q) return all.filter(t => t.verified);
-
-  return all.filter(t => t.verified && (
-    t.name.toLowerCase().includes(q)           ||
-    t.description.toLowerCase().includes(q)    ||
-    t.company.toLowerCase().includes(q)        ||
-    t.categoryLabel.toLowerCase().includes(q)  ||
-    t.features.some(f => f.toLowerCase().includes(q)) ||
-    t.bestFor.toLowerCase().includes(q)
-  )).sort((a, b) => {
-    // Priorizar matches exactos en nombre
-    const aName = a.name.toLowerCase().startsWith(q) ? 1 : 0;
-    const bName = b.name.toLowerCase().startsWith(q) ? 1 : 0;
-    return bName - aName || b.rating - a.rating;
-  });
+  if (!q) return all;
+  return all
+    .filter((tool) => {
+      const haystack = [
+        tool.name,
+        tool.company,
+        tool.categoryLabel,
+        tool.description,
+        tool.bestFor,
+        ...tool.features,
+      ].join(' ').toLowerCase();
+      return haystack.includes(q);
+    })
+    .sort((a, b) => {
+      const aName = a.name.toLowerCase().startsWith(q) ? 1 : 0;
+      const bName = b.name.toLowerCase().startsWith(q) ? 1 : 0;
+      return bName - aName || b.rating - a.rating;
+    });
 }

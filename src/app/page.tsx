@@ -125,7 +125,7 @@ function AdSlot({ size = "banner" }: { size?: "banner" | "native" }) {
       style={{ border: "1px dashed var(--border)", background: "linear-gradient(135deg, var(--bg-card), var(--bg))", color: "var(--text-dim)", fontSize: "12px", fontFamily: "var(--font-mono)" }}>
       <div className="text-center">
         <div className="text-[10px] opacity-50 mb-1"></div>
-        <div className="text-[11px]">{size === "banner" ? "COMPARE" : "Native Ad Unit"}</div>
+        <div className="text-[11px]">{size === "banner" ? "COMPARE" : "BEST IAS"}</div>
         <div className="text-[9px] mt-0.5 opacity-40 hidden sm:block"></div>
       </div>
     </div>

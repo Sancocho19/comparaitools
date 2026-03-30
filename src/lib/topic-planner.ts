@@ -120,26 +120,26 @@ const CLUSTERS: TopicCluster[] = [
 ];
 
 const JOB_TITLE_MAP: Record<string, string> = {
-  'write code faster': 'write code faster',
-  'debug faster': 'debug software faster',
-  'ship features': 'ship features faster',
-  'review pull requests': 'review pull requests',
-  'generate videos': 'create videos',
-  'edit clips faster': 'edit video clips faster',
-  'create ads': 'create ad creatives',
-  'repurpose long videos': 'repurpose long-form videos',
-  'generate images': 'create images',
-  'improve product shots': 'improve product photos',
-  'make thumbnails': 'make thumbnails',
-  'create brand assets': 'create brand assets',
-  'write blog posts': 'write blog posts',
-  'write emails': 'write emails',
-  'write ad copy': 'write ad copy',
-  'rewrite content faster': 'rewrite content faster',
-  'find sources': 'do research',
-  'summarize reports': 'summarize reports',
-  'extract insights': 'extract insights',
-  'compare claims': 'compare claims',
+  'write code faster': 'Write Code Faster',
+  'debug faster': 'Debug Software Faster',
+  'ship features': 'Ship Features Faster',
+  'review pull requests': 'Review Pull Requests',
+  'generate videos': 'Create Videos',
+  'edit clips faster': 'Edit Video Clips Faster',
+  'create ads': 'Create Ad Creatives',
+  'repurpose long videos': 'Repurpose Long-Form Videos',
+  'generate images': 'Create Images',
+  'improve product shots': 'Improve Product Photos',
+  'make thumbnails': 'Make Thumbnails',
+  'create brand assets': 'Create Brand Assets',
+  'write blog posts': 'Write Blog Posts',
+  'write emails': 'Write Emails',
+  'write ad copy': 'Write Ad Copy',
+  'rewrite content faster': 'Rewrite Content Faster',
+  'find sources': 'Do Research',
+  'summarize reports': 'Summarize Reports',
+  'extract insights': 'Extract Insights',
+  'compare claims': 'Compare Claims',
 };
 
 const JOB_KEYWORD_MAP: Record<string, string> = {
@@ -149,15 +149,15 @@ const JOB_KEYWORD_MAP: Record<string, string> = {
   'review pull requests': 'code review',
   'generate videos': 'video creation',
   'edit clips faster': 'video editing',
-  'create ads': 'ad creatives',
+  'create ads': 'ad creative production',
   'repurpose long videos': 'video repurposing',
   'generate images': 'image generation',
-  'improve product shots': 'product photos',
-  'make thumbnails': 'thumbnails',
+  'improve product shots': 'product photo editing',
+  'make thumbnails': 'thumbnail design',
   'create brand assets': 'brand asset creation',
   'write blog posts': 'blog writing',
   'write emails': 'email writing',
-  'write ad copy': 'ad copy',
+  'write ad copy': 'ad copywriting',
   'rewrite content faster': 'content rewriting',
   'find sources': 'research',
   'summarize reports': 'report summarization',
@@ -204,38 +204,24 @@ function getPatternOrder(mode: QueueMode): OpportunityType[] {
 function getPatternWeight(pattern: OpportunityType, mode: QueueMode): number {
   if (mode === 'coverage') {
     switch (pattern) {
-      case 'best-for-role':
-        return 10;
-      case 'pricing':
-        return 9;
-      case 'alternatives':
-        return 9;
-      case 'versus':
-        return 8;
-      case 'workflow-guide':
-        return 7;
-      case 'switching-guide':
-        return 6;
-      case 'free-tools':
-        return 5;
+      case 'best-for-role': return 10;
+      case 'pricing': return 9;
+      case 'alternatives': return 9;
+      case 'versus': return 8;
+      case 'workflow-guide': return 7;
+      case 'switching-guide': return 6;
+      case 'free-tools': return 5;
     }
   }
 
   switch (pattern) {
-    case 'pricing':
-      return mode === 'money' ? 22 : 18;
-    case 'alternatives':
-      return mode === 'money' ? 20 : 16;
-    case 'versus':
-      return 10;
-    case 'best-for-role':
-      return 8;
-    case 'switching-guide':
-      return 6;
-    case 'workflow-guide':
-      return 4;
-    case 'free-tools':
-      return 2;
+    case 'pricing': return mode === 'money' ? 24 : 18;
+    case 'alternatives': return mode === 'money' ? 22 : 16;
+    case 'versus': return 12;
+    case 'best-for-role': return 10;
+    case 'switching-guide': return 7;
+    case 'workflow-guide': return 5;
+    case 'free-tools': return 2;
   }
 }
 
@@ -257,156 +243,88 @@ function numeric(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
-function titleCase(text: string): string {
-  return text
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function cleanToolName(name: string): string {
-  return name.replace(/\s+/g, ' ').trim();
-}
-
-function cleanPhrase(text: string): string {
-  return text
-    .replace(/\bAI\b/g, 'AI')
-    .replace(/\s+/g, ' ')
-    .replace(/\bml\b/gi, 'ML')
-    .trim();
-}
-
-function naturalJobTitle(job: string): string {
-  return JOB_TITLE_MAP[job] ?? job;
-}
-
-function naturalJobKeyword(job: string): string {
-  return JOB_KEYWORD_MAP[job] ?? job;
-}
-
 function findToolsForCluster(cluster: TopicCluster): Tool[] {
-  const categorySet = new Set(cluster.categories.map(normalizeCategory));
-
-  return TOOL_LIST.filter((tool) => {
-    const category = normalizeCategory(tool.category);
-    const categoryLabel = normalizeCategory(tool.categoryLabel);
-    return categorySet.has(category) || categorySet.has(categoryLabel);
-  });
+  const wanted = new Set(cluster.categories.map(normalizeCategory));
+  return TOOL_LIST.filter((tool) => wanted.has(normalizeCategory(tool.category)) || wanted.has(normalizeCategory(tool.categoryLabel)));
 }
 
-function makeTitle(
-  cluster: TopicCluster,
-  pattern: OpportunityType,
-  toolNames: string[],
-): { title: string; keyword: string; angle: string } {
-  const [rawA = cluster.label, rawB = 'the leading alternative'] = toolNames;
-  const a = cleanToolName(rawA);
-  const b = cleanToolName(rawB);
-  const primaryPersona = cluster.persona.split(',')[0]?.trim() || 'buyers';
-  const primaryJob = cluster.jobs[0] || 'work faster';
-  const jobTitle = naturalJobTitle(primaryJob);
-  const jobKeyword = naturalJobKeyword(primaryJob);
+function getWorkflowTitle(toolName: string, job: string): string {
+  const action = JOB_TITLE_MAP[job] ?? job
+    .replace(/\b\w/g, (match) => match.toUpperCase())
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `How to Use ${toolName} to ${action} in ${CURRENT_YEAR}`;
+}
+
+function getWorkflowKeyword(toolName: string, job: string): string {
+  const keywordIntent = JOB_KEYWORD_MAP[job] ?? job.toLowerCase();
+  return `how to use ${toolName} for ${keywordIntent}`;
+}
+
+function makeTitle(cluster: TopicCluster, pattern: OpportunityType, toolNames: string[]): { title: string; keyword: string; angle: string } {
+  const [a = '', b = ''] = toolNames;
+  const persona = cluster.persona.split(',')[0].trim();
+  const firstJob = cluster.jobs[0] ?? 'workflows';
 
   switch (pattern) {
     case 'best-for-role':
       return {
-        title: `Best ${cluster.label} for ${primaryPersona} in ${CURRENT_YEAR}`,
-        keyword: `best ${cluster.label.toLowerCase()} for ${primaryPersona}`,
+        title: `Best ${cluster.label} for ${persona} in ${CURRENT_YEAR}`,
+        keyword: `best ${cluster.label.toLowerCase()} for ${persona}`,
         angle: `Commercial shortlist with real jobs-to-be-done for ${cluster.persona}.`,
       };
-
     case 'versus':
       return {
-        title: `${a} vs ${b} in ${CURRENT_YEAR}: Which Is Better for ${primaryPersona}?`,
+        title: `${a} vs ${b}: Which One Fits ${persona} Better in ${CURRENT_YEAR}?`,
         keyword: `${a} vs ${b}`,
-        angle: `Head-to-head decision page for buyers already comparing two specific tools.`,
+        angle: 'Head-to-head decision page for buyers already comparing two specific tools.',
       };
-
     case 'pricing':
       return {
         title: `${a} Pricing ${CURRENT_YEAR}: Plans, Costs, and Best Fit`,
         keyword: `${a} pricing ${CURRENT_YEAR}`,
-        angle: `High-intent pricing page for users close to purchase.`,
+        angle: 'High-intent pricing page for users close to purchase.',
       };
-
     case 'switching-guide':
       return {
-        title: `Switching from ${a} to ${b} in ${CURRENT_YEAR}: What Changes?`,
+        title: `Switching from ${a} to ${b}: Cost, Friction, and What You Actually Gain`,
         keyword: `switch from ${a} to ${b}`,
-        angle: `Switching-cost article for users unhappy with their current tool.`,
+        angle: 'Switching-cost article for users unhappy with their current tool.',
       };
-
     case 'workflow-guide':
       return {
-        title: `How to Use ${a} for ${titleCase(jobTitle)} in ${CURRENT_YEAR}`,
-        keyword: `how to use ${a} for ${jobKeyword}`,
-        angle: `Workflow-led guide that can win long-tail queries with strong intent.`,
+        title: getWorkflowTitle(a, firstJob),
+        keyword: getWorkflowKeyword(a, firstJob),
+        angle: 'Workflow-led guide that can win useful long-tail searches when written well.',
       };
-
     case 'free-tools':
       return {
         title: `Best Free ${cluster.label} in ${CURRENT_YEAR} That Still Feel Usable`,
         keyword: `best free ${cluster.label.toLowerCase()} ${CURRENT_YEAR}`,
-        angle: `Free-tool roundup with clear tradeoffs and upgrade thresholds.`,
+        angle: 'Free-tool roundup with clear tradeoffs and upgrade thresholds.',
       };
-
     case 'alternatives':
       return {
         title: `Best ${a} Alternatives in ${CURRENT_YEAR}`,
         keyword: `${a} alternatives ${CURRENT_YEAR}`,
-        angle: `High-intent alternatives page for users comparing replacements, pricing, and tradeoffs.`,
-      };
-
-    default:
-      return {
-        title: `Best ${cluster.label} in ${CURRENT_YEAR}`,
-        keyword: `best ${cluster.label.toLowerCase()} ${CURRENT_YEAR}`,
-        angle: `Fallback opportunity page for the cluster.`,
+        angle: 'High-intent alternatives page for users comparing replacements, pricing, and tradeoffs.',
       };
   }
 }
 
-function patternExplanation(pattern: OpportunityType): string {
-  switch (pattern) {
-    case 'pricing':
-      return 'pricing pages target bottom-of-funnel visitors with strong purchase intent';
-    case 'alternatives':
-      return 'alternatives pages catch users actively looking to switch or compare replacements';
-    case 'versus':
-      return 'versus pages capture direct comparison intent';
-    case 'best-for-role':
-      return 'best-for-role pages match real jobs-to-be-done instead of generic head terms';
-    case 'switching-guide':
-      return 'switching guides attract dissatisfied users close to a change';
-    case 'workflow-guide':
-      return 'workflow guides can win useful long-tail searches when written well';
-    case 'free-tools':
-      return 'free-tools pages can bring awareness traffic with upgrade potential';
-  }
-}
-
-function dedupeAndSortPatterns(patterns: OpportunityType[], mode: QueueMode): OpportunityType[] {
-  const order = getPatternOrder(mode);
-  return [...new Set(patterns)].sort((a, b) => order.indexOf(a) - order.indexOf(b));
-}
-
-export function buildOpportunityQueue(limit = 60, mode: QueueMode = 'money'): ContentOpportunity[] {
+export function buildOpportunityQueue(limit = 20, mode: QueueMode = 'money'): ContentOpportunity[] {
   const opportunities: ContentOpportunity[] = [];
+  const patternOrder = getPatternOrder(mode);
 
   for (const cluster of CLUSTERS) {
-    const clusterTools = findToolsForCluster(cluster).sort((a, b) => {
-      const ratingDelta = numeric(b.rating) - numeric(a.rating);
-      if (ratingDelta !== 0) return ratingDelta;
-      return numeric(b.pricingValue) - numeric(a.pricingValue);
-    });
-
+    const clusterTools = findToolsForCluster(cluster)
+      .sort((a, b) => (numeric(b.rating) * 100 + numeric(b.pricingValue)) - (numeric(a.rating) * 100 + numeric(a.pricingValue)));
     const top = clusterTools.slice(0, 5);
     if (!top.length) continue;
 
-    const patterns = dedupeAndSortPatterns(cluster.pagePatterns, mode);
+    const activePatterns = patternOrder.filter((pattern) => cluster.pagePatterns.includes(pattern));
 
-    for (const pattern of patterns) {
+    for (const pattern of activePatterns) {
       let toolSlugs: string[] = [];
       let toolNames: string[] = [];
 
@@ -426,23 +344,21 @@ export function buildOpportunityQueue(limit = 60, mode: QueueMode = 'money'): Co
       if (!built) continue;
 
       const { title, keyword, angle } = built;
-      const scoreBase = cluster.monetizationPriority * 10;
-      const competitionPenalty =
-        cluster.competition === 'high' ? 12 : cluster.competition === 'medium' ? 6 : 0;
+      const competitionPenalty = cluster.competition === 'high' ? 14 : cluster.competition === 'medium' ? 8 : 2;
       const patternWeight = getPatternWeight(pattern, mode);
-      const score = Math.max(1, scoreBase + patternWeight - competitionPenalty);
+      const score = Math.max(1, cluster.monetizationPriority * 10 + patternWeight - competitionPenalty);
 
       opportunities.push({
         key: slugify(`${cluster.key}-${pattern}-${toolSlugs.join('-')}`),
         clusterKey: cluster.key,
         clusterLabel: cluster.label,
-        title: cleanPhrase(title),
-        primaryKeyword: cleanPhrase(keyword),
+        title,
+        primaryKeyword: keyword,
         secondaryKeywords: cluster.seedKeywords.slice(0, 4),
         pageType: pattern,
         monetizationPriority: cluster.monetizationPriority,
         competition: cluster.competition,
-        whyThisCanWin: `${cluster.label} has ${cluster.competition} SERP pressure, and ${patternExplanation(pattern)}.`,
+        whyThisCanWin: `${cluster.label} has ${cluster.competition} SERP pressure, and ${pattern} pages target stronger intent than generic head terms.`,
         angle,
         toolSlugs,
         score,
@@ -450,7 +366,5 @@ export function buildOpportunityQueue(limit = 60, mode: QueueMode = 'money'): Co
     }
   }
 
-  return opportunities
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  return opportunities.sort((a, b) => b.score - a.score).slice(0, limit);
 }

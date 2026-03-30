@@ -48,9 +48,7 @@ async function generateArticle(prompt: string): Promise<string> {
 
   const data = await response.json();
   const content = data.content?.find((part: any) => part.type === 'text')?.text ?? '';
-  if (!content.includes('<article')) {
-    throw new Error('Model did not return HTML article content');
-  }
+  if (!content.includes('<article')) throw new Error('Model did not return HTML article content');
   return content;
 }
 
@@ -61,9 +59,7 @@ async function handleGeneration(request: NextRequest, bodySecret?: string | null
 
   const state = await getGenerationState();
   const decision = selectNextContent(state);
-  if (!decision) {
-    return NextResponse.json({ success: true, message: 'No content to generate' });
-  }
+  if (!decision) return NextResponse.json({ success: true, message: 'No content to generate' });
 
   const slug = generateSlug(decision);
   if (state.publishedSlugs.includes(slug)) {

@@ -19,7 +19,7 @@ export type ContentDecision =
 function sameCategoryTools(tool: Tool): Tool[] {
   return TOOL_LIST
     .filter((candidate) => candidate.category === tool.category && candidate.slug !== tool.slug)
-    .sort((a, b) => b.rating - a.rating);
+    .sort((a, b) => b.rating - a.rating || b.pricingValue - a.pricingValue);
 }
 
 export function selectNextContent(state: GenerationState): ContentDecision {
@@ -27,9 +27,7 @@ export function selectNextContent(state: GenerationState): ContentDecision {
   if (reviewTarget) return { type: 'review', tool: reviewTarget };
 
   for (const tool of TOOL_LIST) {
-    if (!state.pricingDone.includes(tool.slug)) {
-      return { type: 'pricing', tool };
-    }
+    if (!state.pricingDone.includes(tool.slug)) return { type: 'pricing', tool };
   }
 
   for (const tool of TOOL_LIST) {
@@ -54,6 +52,7 @@ export function selectNextContent(state: GenerationState): ContentDecision {
     bucket.push(tool);
     byCategory.set(tool.category, bucket);
   }
+
   for (const [category, items] of byCategory.entries()) {
     if (items.length >= 3 && !state.roundupsDone.includes(category)) {
       return {
@@ -69,8 +68,8 @@ export function selectNextContent(state: GenerationState): ContentDecision {
   return {
     type: 'guide',
     tool: guideTarget,
-    topic: `${guideTarget.name} for teams in ${CURRENT_YEAR}`,
-    keyword: `${guideTarget.name} for teams`,
+    topic: `How to use ${guideTarget.name} for real-world workflows in ${CURRENT_YEAR}`,
+    keyword: `how to use ${guideTarget.name}`,
   };
 }
 
@@ -94,12 +93,13 @@ export function generateSlug(decision: ContentDecision): string {
 
 export function summarizeDecision(decision: ContentDecision): { primaryKeyword: string; title: string; description: string; type: ContentType; toolSlugs: string[]; category: string } {
   if (!decision) throw new Error('No content decision');
+
   switch (decision.type) {
     case 'review':
       return {
         primaryKeyword: `${decision.tool.name} review ${CURRENT_YEAR}`,
         title: `${decision.tool.name} Review ${CURRENT_YEAR}: Pricing, Strengths, Weaknesses, and Best Use Cases`,
-        description: `Source-backed ${decision.tool.name} review with pricing, best use cases, limitations, and alternatives for ${CURRENT_YEAR}.`,
+        description: `Research-backed ${decision.tool.name} review with pricing, strengths, limitations, and best use cases for ${CURRENT_YEAR}.`,
         type: 'review',
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
@@ -108,7 +108,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
       return {
         primaryKeyword: `${decision.toolA.name} vs ${decision.toolB.name}`,
         title: `${decision.toolA.name} vs ${decision.toolB.name}: Which One Makes More Sense in ${CURRENT_YEAR}?`,
-        description: `A source-backed comparison of ${decision.toolA.name} and ${decision.toolB.name}, including pricing, strengths, tradeoffs, and who each tool fits best.`,
+        description: `A research-backed comparison of ${decision.toolA.name} and ${decision.toolB.name}, including pricing, tradeoffs, and who each tool fits best.`,
         type: 'comparison',
         toolSlugs: [decision.toolA.slug, decision.toolB.slug],
         category: decision.toolA.category,
@@ -117,7 +117,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
       return {
         primaryKeyword: `best ${decision.categoryLabel.toLowerCase()} ai tools ${CURRENT_YEAR}`,
         title: `Best ${decision.categoryLabel} AI Tools in ${CURRENT_YEAR}: What Actually Stands Out`,
-        description: `A curated, source-backed roundup of the best ${decision.categoryLabel.toLowerCase()} AI tools in ${CURRENT_YEAR}, with tradeoffs and buying advice.`,
+        description: `A researched roundup of the best ${decision.categoryLabel.toLowerCase()} AI tools in ${CURRENT_YEAR}, with fit, tradeoffs, and buying advice.`,
         type: 'roundup',
         toolSlugs: decision.tools.map((tool) => tool.slug),
         category: decision.category,
@@ -125,8 +125,8 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
     case 'pricing':
       return {
         primaryKeyword: `${decision.tool.name} pricing ${CURRENT_YEAR}`,
-        title: `${decision.tool.name} Pricing ${CURRENT_YEAR}: Plans, Hidden Tradeoffs, and Best Fit`,
-        description: `A source-backed breakdown of ${decision.tool.name} pricing, plan differences, upgrade thresholds, and value for money in ${CURRENT_YEAR}.`,
+        title: `${decision.tool.name} Pricing ${CURRENT_YEAR}: Plans, Costs, and Best Fit`,
+        description: `A research-backed breakdown of ${decision.tool.name} pricing, plan differences, upgrade thresholds, and value for money in ${CURRENT_YEAR}.`,
         type: 'pricing',
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
@@ -135,7 +135,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
       return {
         primaryKeyword: `${decision.tool.name} alternatives ${CURRENT_YEAR}`,
         title: `Best ${decision.tool.name} Alternatives in ${CURRENT_YEAR}: Better Value, Better Fit, or Both?`,
-        description: `Source-backed alternatives to ${decision.tool.name}, focused on price, fit, and the scenarios where switching actually makes sense.`,
+        description: `Research-backed alternatives to ${decision.tool.name}, focused on price, fit, and the situations where switching makes sense.`,
         type: 'alternatives',
         toolSlugs: [decision.tool.slug, ...decision.alternatives.map((tool) => tool.slug)],
         category: decision.tool.category,
@@ -144,7 +144,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
       return {
         primaryKeyword: decision.keyword,
         title: decision.topic,
-        description: `A practical guide to ${decision.topic} backed by live research and editorial analysis.`,
+        description: `A practical guide to ${decision.topic} built from live research, official documentation, and product data.`,
         type: 'guide',
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
@@ -152,75 +152,102 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
   }
 }
 
+function officialDomain(url: string): string {
+  return new URL(url).hostname.replace(/^www\./, '');
+}
+
+function dedupeSources(sources: ResearchBundle['sources']): ResearchBundle['sources'] {
+  const seen = new Set<string>();
+  const unique = [] as ResearchBundle['sources'];
+
+  for (const source of sources) {
+    if (!source?.url) continue;
+    if (seen.has(source.url)) continue;
+    seen.add(source.url);
+    unique.push(source);
+  }
+
+  return unique;
+}
+
+function scoreEvidence(sources: ResearchBundle['sources'], mustIncludeDomain?: string): number {
+  const uniqueDomains = new Set(sources.map((source) => source.domain)).size;
+  const officialBonus = mustIncludeDomain && sources.some((source) => source.domain === mustIncludeDomain) ? 20 : 0;
+  const sourceVolume = Math.min(40, sources.length * 5);
+  const diversity = Math.min(20, uniqueDomains * 4);
+  return Math.min(100, 20 + officialBonus + sourceVolume + diversity);
+}
+
 export async function buildResearchBundle(decision: ContentDecision): Promise<ResearchBundle> {
   if (!decision) throw new Error('No content decision');
   const queries: SearchQuery[] = [];
 
   if (decision.type === 'review' || decision.type === 'pricing') {
+    const domain = officialDomain(decision.tool.url);
     queries.push(
-      {
-        query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`,
-        reason: 'Verify current plans and official pricing details',
-        includeDomains: [new URL(decision.tool.url).hostname.replace(/^www\./, '')],
-      },
-      {
-        query: `${decision.tool.name} features release notes ${CURRENT_YEAR}`,
-        reason: 'Verify current features, launches, and major product changes',
-      },
-      {
-        query: `${decision.tool.name} reviews comparison ${CURRENT_YEAR}`,
-        reason: 'Collect third-party market commentary and user-facing tradeoffs',
-      },
+      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: 'Verify current plans and official pricing details', includeDomains: [domain] },
+      { query: `${decision.tool.name} official documentation features ${CURRENT_YEAR}`, reason: 'Verify current product capabilities from official docs', includeDomains: [domain] },
+      { query: `${decision.tool.name} release notes changelog ${CURRENT_YEAR}`, reason: 'Check recent product changes and momentum' },
+      { query: `${decision.tool.name} reviews comparison ${CURRENT_YEAR}`, reason: 'Collect third-party commentary on tradeoffs and fit' },
     );
   }
 
   if (decision.type === 'comparison') {
     queries.push(
-      { query: `${decision.toolA.name} vs ${decision.toolB.name} ${CURRENT_YEAR}`, reason: 'Identify head-to-head market framing and intent' },
-      { query: `${decision.toolA.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolA.name}`, includeDomains: [new URL(decision.toolA.url).hostname.replace(/^www\./, '')] },
-      { query: `${decision.toolB.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolB.name}`, includeDomains: [new URL(decision.toolB.url).hostname.replace(/^www\./, '')] },
-      { query: `${decision.toolA.name} ${decision.toolB.name} release notes ${CURRENT_YEAR}`, reason: 'Check current feature shifts and momentum' },
+      { query: `${decision.toolA.name} vs ${decision.toolB.name} ${CURRENT_YEAR}`, reason: 'Map head-to-head comparison intent and market framing' },
+      { query: `${decision.toolA.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolA.name}`, includeDomains: [officialDomain(decision.toolA.url)] },
+      { query: `${decision.toolB.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolB.name}`, includeDomains: [officialDomain(decision.toolB.url)] },
+      { query: `${decision.toolA.name} ${decision.toolB.name} release notes ${CURRENT_YEAR}`, reason: 'Check current feature momentum and positioning' },
     );
   }
 
   if (decision.type === 'roundup') {
     queries.push(
-      { query: `best ${decision.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Map current intent and list framing' },
-      { query: `${decision.categoryLabel} ai tools pricing ${CURRENT_YEAR}`, reason: 'Capture commercial angles and buying tradeoffs' },
-      { query: `${decision.categoryLabel} ai tools use cases ${CURRENT_YEAR}`, reason: 'Gather practical jobs-to-be-done and selection criteria' },
-      { query: `${decision.categoryLabel} ai tools for teams ${CURRENT_YEAR}`, reason: 'Find business-facing intent and buying signals', },
+      { query: `best ${decision.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Map current commercial intent and list framing' },
+      { query: `${decision.categoryLabel} ai tools pricing ${CURRENT_YEAR}`, reason: 'Capture pricing and buying angles across the market' },
+      { query: `${decision.categoryLabel} ai tools use cases ${CURRENT_YEAR}`, reason: 'Gather real jobs-to-be-done and decision criteria' },
+      { query: `${decision.categoryLabel} ai tools for teams ${CURRENT_YEAR}`, reason: 'Find business-facing intent and team-buying signals' },
     );
   }
 
   if (decision.type === 'alternatives') {
     queries.push(
-      { query: `${decision.tool.name} alternatives ${CURRENT_YEAR}`, reason: 'Map switching intent and competitive alternatives' },
-      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.tool.name}`, includeDomains: [new URL(decision.tool.url).hostname.replace(/^www\./, '')] },
-      { query: `${decision.tool.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Find current market substitutes with strong fit' },
+      { query: `${decision.tool.name} alternatives ${CURRENT_YEAR}`, reason: 'Map switching intent and replacement-style SERPs' },
+      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.tool.name}`, includeDomains: [officialDomain(decision.tool.url)] },
+      { query: `${decision.tool.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Find current substitutes and adjacent competitors with strong fit' },
+      { query: `${decision.tool.name} release notes ${CURRENT_YEAR}`, reason: 'Check what changed recently before recommending alternatives' },
     );
   }
 
   if (decision.type === 'guide') {
     queries.push(
-      { query: `${decision.topic} ${CURRENT_YEAR}`, reason: 'Gather live market context for the guide topic' },
-      { query: `${decision.tool.name} official documentation ${CURRENT_YEAR}`, reason: `Verify current ${decision.tool.name} capabilities`, includeDomains: [new URL(decision.tool.url).hostname.replace(/^www\./, '')] },
+      { query: `${decision.topic} ${CURRENT_YEAR}`, reason: 'Gather live context for the workflow topic' },
+      { query: `${decision.tool.name} official documentation ${CURRENT_YEAR}`, reason: `Verify current ${decision.tool.name} capabilities`, includeDomains: [officialDomain(decision.tool.url)] },
+      { query: `${decision.tool.name} best practices ${CURRENT_YEAR}`, reason: 'Capture practical implementation details and pitfalls' },
     );
   }
 
   const result = await runSearchQueries(queries);
-  const evidenceScore = Math.min(100, result.sources.length * 10);
+  const sources = dedupeSources(result.sources).slice(0, 12);
+  const mustIncludeDomain =
+    decision?.type === 'review' || decision?.type === 'pricing' || decision?.type === 'alternatives' || decision?.type === 'guide'
+      ? officialDomain(decision.tool.url)
+      : decision?.type === 'comparison'
+        ? officialDomain(decision.toolA.url)
+        : undefined;
+  const evidenceScore = scoreEvidence(sources, mustIncludeDomain);
 
   return {
     provider: result.provider,
     generatedAt: new Date().toISOString(),
     queries: queries.map((query) => query.query),
-    sources: result.sources,
+    sources,
     evidenceScore,
     freshness: 'live-web',
     methodology: [
-      'Live web search using a configured search provider',
-      'Preference for official pricing pages, release notes, and high-trust product coverage',
-      'Editorial synthesis with explicit tradeoffs instead of fake first-person testing claims',
+      'Live web search using the configured search provider',
+      'Preference for official pricing pages, documentation, release notes, and high-trust market coverage',
+      'Editorial synthesis based on sourced facts and structured product data',
     ],
   };
 }
@@ -229,9 +256,7 @@ export function buildPrompt(decision: ContentDecision, research: ResearchBundle)
   const summary = summarizeDecision(decision);
   const sourceList = research.sources
     .slice(0, 12)
-    .map((source, index) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}
-Reason: ${source.reason}
-Snippet: ${source.snippet}`)
+    .map((source, index) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}\nReason: ${source.reason}\nSnippet: ${source.snippet}`)
     .join('\n\n');
 
   const decisionContext = (() => {
@@ -239,28 +264,15 @@ Snippet: ${source.snippet}`)
     switch (decision.type) {
       case 'review':
       case 'pricing':
-        return `Tool data:
-${JSON.stringify(decision.tool, null, 2)}`;
+        return `Tool data:\n${JSON.stringify(decision.tool, null, 2)}`;
       case 'comparison':
-        return `Tool A:
-${JSON.stringify(decision.toolA, null, 2)}
-
-Tool B:
-${JSON.stringify(decision.toolB, null, 2)}`;
+        return `Tool A:\n${JSON.stringify(decision.toolA, null, 2)}\n\nTool B:\n${JSON.stringify(decision.toolB, null, 2)}`;
       case 'roundup':
-        return `Roundup tools:
-${JSON.stringify(decision.tools, null, 2)}`;
+        return `Roundup tools:\n${JSON.stringify(decision.tools, null, 2)}`;
       case 'alternatives':
-        return `Primary tool:
-${JSON.stringify(decision.tool, null, 2)}
-
-Alternatives:
-${JSON.stringify(decision.alternatives, null, 2)}`;
+        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nAlternatives:\n${JSON.stringify(decision.alternatives, null, 2)}`;
       case 'guide':
-        return `Primary tool:
-${JSON.stringify(decision.tool, null, 2)}
-
-Guide topic: ${decision.topic}`;
+        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nGuide topic: ${decision.topic}`;
     }
   })();
 
@@ -275,17 +287,19 @@ META DESCRIPTION GOAL: ${summary.description}
 MANDATORY RULES:
 - Do NOT claim personal use, hands-on testing, subscriptions, or fake experiments.
 - Do NOT write phrases like "I tested", "we tested", "our team found", or invent a founder persona.
-- Base factual statements on the supplied live research sources or the structured tool data.
+- Every factual claim about pricing, plans, releases, or availability must be grounded in the supplied live research sources or the structured tool data.
 - Add original value by explaining tradeoffs, fit, switching costs, onboarding friction, and decision criteria.
-- When evidence is incomplete or mixed, say so plainly.
+- When evidence is incomplete, mixed, or outdated, say so plainly.
 - Keep the tone sharp, commercial, and human. No fluff, no AI clichés, no vague hype.
 - Mention the exact update date in the intro.
 - Output ONLY semantic HTML inside a single <article> element.
 - Include one <section id="quick-answer"> near the top with a direct recommendation.
+- Include one <section id="pricing-snapshot"> with a short table or bullet summary when pricing matters.
 - Include one <section id="who-should-buy"> and one <section id="who-should-skip">.
 - Include one <section id="switching-costs"> when another tool is relevant.
 - Include one <section id="methodology"> describing how the article was assembled from live research and product data.
 - Include one <section id="sources"> with an ordered list of 5-12 cited sources using the supplied titles and URLs.
+- In the sources section, each item must use a clickable <a href="...">source title</a>.
 - Include internal links where natural to /tools/[slug], /compare/[slugA-vs-slugB], /category/[category], and /blog.
 - Keep the article between 1,500 and 2,300 words.
 
@@ -306,6 +320,7 @@ WRITE FOR THESE OUTCOMES:
 - Make at least three non-obvious buying points.
 - Explain why someone would regret the wrong choice.
 - Use short tables or bullet lists when it clarifies a decision.
+- Mention 2-3 specific facts from the supplied sources naturally in the article body.
 
 Use this decision context:
 ${decisionContext}
@@ -318,6 +333,7 @@ ${sourceList}
 export function generateSEOMetadata(decision: ContentDecision, content: string): Pick<BlogPost, 'title' | 'metaTitle' | 'metaDescription' | 'primaryKeyword' | 'keywords' | 'excerpt' | 'wordCount' | 'readingTime' | 'schemaOrg'> {
   const summary = summarizeDecision(decision);
   const wordCount = stripHtml(content).split(/\s+/).filter(Boolean).length;
+
   return {
     title: summary.title,
     metaTitle: summary.title,

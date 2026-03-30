@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildOpportunityQueue } from '@/lib/topic-planner';
+import { buildOpportunityQueue, type QueueMode } from '@/lib/topic-planner';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +13,11 @@ function isAuthorized(request: NextRequest): boolean {
   return authHeader === `Bearer ${expected}` || urlSecret === expected;
 }
 
+function parseMode(value: string | null): QueueMode {
+  if (value === 'balanced' || value === 'coverage') return value;
+  return 'money';
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!isAuthorized(request)) {
@@ -21,10 +26,12 @@ export async function GET(request: NextRequest) {
 
     const limitParam = Number.parseInt(request.nextUrl.searchParams.get('limit') ?? '40', 10);
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 40;
-    const opportunities = buildOpportunityQueue(limit);
+    const mode = parseMode(request.nextUrl.searchParams.get('mode'));
+    const opportunities = buildOpportunityQueue(limit, mode);
 
     return NextResponse.json({
       success: true,
+      mode,
       count: opportunities.length,
       opportunities,
     });

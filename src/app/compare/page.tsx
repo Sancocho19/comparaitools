@@ -21,8 +21,23 @@ export const metadata: Metadata = {
 
 type ToolItem = Awaited<ReturnType<typeof getAllTools>>[number];
 
-function getEvidenceScore(tool: Partial<ToolItem>): number {
-  return Number(tool.evidenceScore ?? tool.research?.evidenceScore ?? 0);
+type ToolWithResearch = ToolItem & {
+  evidenceScore?: number;
+  sourceCount?: number;
+  research?: {
+    evidenceScore?: number;
+    sourceCount?: number;
+  };
+};
+
+function getEvidenceScore(tool: ToolItem): number {
+  const typed = tool as ToolWithResearch;
+  return Number(typed.evidenceScore ?? typed.research?.evidenceScore ?? 0);
+}
+
+function getSourceCount(tool: ToolItem): number {
+  const typed = tool as ToolWithResearch;
+  return Number(typed.sourceCount ?? typed.research?.sourceCount ?? 0);
 }
 
 export default async function ComparePage() {

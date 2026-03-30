@@ -1,0 +1,112 @@
+[
+  {
+    "key": "ai-coding",
+    "label": "AI coding tools",
+    "persona": "developers, startup founders, technical teams",
+    "competition": "medium",
+    "monetizationPriority": 10,
+    "jobs": ["write code faster", "debug faster", "ship features", "review pull requests"],
+    "seedKeywords": ["best ai coding tools", "cursor alternatives", "copilot vs cursor", "ai code review tools", "best ai for developers"],
+    "pagePatterns": ["best-for-role", "versus", "pricing", "switching-guide", "workflow-guide"],
+    "categories": ["coding", "developer-tools"]
+  },
+  {
+    "key": "ai-meeting-notes",
+    "label": "AI meeting assistants",
+    "persona": "sales teams, agencies, managers, founders",
+    "competition": "medium",
+    "monetizationPriority": 9,
+    "jobs": ["record meetings", "create summaries", "track action items", "push notes to CRM"],
+    "seedKeywords": ["best ai meeting assistant", "otter alternatives", "fireflies vs fathom", "meeting note taker ai", "ai meeting summary tools"],
+    "pagePatterns": ["best-for-role", "versus", "pricing", "workflow-guide"],
+    "categories": ["productivity", "meeting-assistants"]
+  },
+  {
+    "key": "ai-video",
+    "label": "AI video tools",
+    "persona": "creators, marketers, agencies, course builders",
+    "competition": "medium",
+    "monetizationPriority": 9,
+    "jobs": ["generate videos", "edit clips faster", "create ads", "repurpose long videos"],
+    "seedKeywords": ["best ai video generator", "runway alternatives", "best ai video editor", "ai ad creative tools", "text to video ai tools"],
+    "pagePatterns": ["best-for-role", "versus", "pricing", "workflow-guide", "free-tools"],
+    "categories": ["video", "creative-tools"]
+  },
+  {
+    "key": "ai-images",
+    "label": "AI image tools",
+    "persona": "designers, marketers, ecommerce brands, solo creators",
+    "competition": "high",
+    "monetizationPriority": 8,
+    "jobs": ["generate images", "improve product shots", "make thumbnails", "create brand assets"],
+    "seedKeywords": ["best ai image generator", "midjourney alternatives", "ai product photo tools", "best ai for thumbnails", "free ai image generator no watermark"],
+    "pagePatterns": ["best-for-role", "pricing", "alternatives", "free-tools"],
+    "categories": ["image", "design"]
+  },
+  {
+    "key": "ai-sales",
+    "label": "AI sales and outreach tools",
+    "persona": "sales reps, SDR teams, agencies, founders",
+    "competition": "low",
+    "monetizationPriority": 10,
+    "jobs": ["write outreach", "personalize cold emails", "research leads", "book meetings"],
+    "seedKeywords": ["best ai sales tools", "best ai for outbound", "ai cold email personalization", "apollo alternatives ai", "ai SDR tools"],
+    "pagePatterns": ["best-for-role", "pricing", "workflow-guide", "switching-guide"],
+    "categories": ["sales", "marketing"]
+  },
+  {
+    "key": "ai-support",
+    "label": "AI support and chatbot tools",
+    "persona": "support teams, SaaS companies, ecommerce stores",
+    "competition": "low",
+    "monetizationPriority": 9,
+    "jobs": ["deflect tickets", "answer FAQs", "route issues", "support customers 24/7"],
+    "seedKeywords": ["best ai customer support tools", "ai support chatbot", "intercom ai alternatives", "help desk ai tools", "best ai live chat"],
+    "pagePatterns": ["best-for-role", "versus", "pricing", "switching-guide"],
+    "categories": ["chatbot", "customer-support"]
+  },
+  {
+    "key": "ai-writing",
+    "label": "AI writing tools",
+    "persona": "marketers, founders, agencies, students",
+    "competition": "high",
+    "monetizationPriority": 7,
+    "jobs": ["write blog posts", "write emails", "write ad copy", "rewrite content faster"],
+    "seedKeywords": ["best ai writing tools", "jasper alternatives", "best ai copywriting tool", "ai blog writing tools", "best ai for marketing copy"],
+    "pagePatterns": ["best-for-role", "pricing", "alternatives", "workflow-guide"],
+    "categories": ["writing", "marketing"]
+  },
+  {
+    "key": "ai-research",
+    "label": "AI research and search tools",
+    "persona": "researchers, analysts, consultants, students",
+    "competition": "medium",
+    "monetizationPriority": 8,
+    "jobs": ["find sources", "summarize reports", "extract insights", "compare claims"],
+    "seedKeywords": ["best ai research tools", "perplexity alternatives", "ai search tools", "best ai for research", "ai literature review tools"],
+    "pagePatterns": ["best-for-role", "versus", "pricing", "workflow-guide"],
+    "categories": ["research", "search"]
+  },
+  {
+    "key": "ai-students",
+    "label": "AI tools for students",
+    "persona": "students, parents, tutors, education creators",
+    "competition": "medium",
+    "monetizationPriority": 6,
+    "jobs": ["study faster", "summarize notes", "learn languages", "improve writing"],
+    "seedKeywords": ["best ai tools for students", "free ai tools for students", "best note summarizer for students", "ai study tools", "best ai homework assistant"],
+    "pagePatterns": ["best-for-role", "free-tools", "workflow-guide"],
+    "categories": ["education", "productivity"]
+  },
+  {
+    "key": "ai-ecommerce",
+    "label": "AI tools for ecommerce",
+    "persona": "store owners, marketers, ecommerce agencies",
+    "competition": "low",
+    "monetizationPriority": 9,
+    "jobs": ["write product copy", "generate ad creatives", "improve product photos", "support customers"],
+    "seedKeywords": ["best ai tools for ecommerce", "ai product description generator", "ai product photo tools", "best ai ad tools for ecommerce", "shopify ai tools"],
+    "pagePatterns": ["best-for-role", "workflow-guide", "pricing", "free-tools"],
+    "categories": ["ecommerce", "marketing", "image"]
+  }
+]

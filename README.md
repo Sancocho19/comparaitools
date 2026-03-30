@@ -1,21 +1,38 @@
-# ComparAITools — search-backed refactor
+# ComparAITools — research-backed growth pack
 
-This refactor changes the project from a persona-based content generator into a research-backed publishing system for AI tool pages.
+This package turns the site into a stronger content system for:
+- source-backed reviews
+- pricing pages
+- alternatives and versus pages
+- cluster-led topic discovery
+- internal QA for thin or weak posts
 
-## What changed
+## What is included
 
-- unified tool source of truth with static JSON + optional Upstash overlay
-- secure cron endpoints using `Authorization: Bearer <CRON_SECRET>`
-- automatic content generation backed by live web search
-- no fake founder persona and no invented `we tested it` claims
-- canonical comparison URLs (`/compare/tool-a-vs-tool-b`)
-- cleaner sitemap generation and cache headers
-- blog pages now show visible research sources
+### Core app improvements
+- secure cron handling with `CRON_SECRET`
+- search-backed article generation
+- premium hybrid blog design
+- canonical compare URLs
+- ranked source selection in the search layer
+- content audit endpoint
+- topic queue endpoint for better keyword targeting
+
+### New planning assets
+- `docs/30-day-roadmap.md`
+- `docs/backlink-playbook.md`
+- `docs/monetization-model.md`
+- `docs/content-clusters.csv`
+- `src/data/topic-clusters.json`
+- `src/lib/topic-planner.ts`
+- `src/app/api/topic-queue/route.ts`
+- `src/app/api/content-audit/route.ts`
 
 ## Required environment variables
 
 Copy `.env.example` to `.env.local` and fill in:
 
+- `NEXT_PUBLIC_SITE_URL`
 - `CRON_SECRET`
 - `ANTHROPIC_API_KEY`
 - one search provider:
@@ -24,38 +41,46 @@ Copy `.env.example` to `.env.local` and fill in:
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-## Cron setup on Vercel
+## Local commands
 
-This project expects Vercel cron jobs to hit:
+```bash
+npm install
+npm run build
+npm run dev
+```
 
+## Useful internal routes
+
+All protected routes expect either:
+- `Authorization: Bearer <CRON_SECRET>`
+- or `?secret=<CRON_SECRET>`
+
+### Generate one content item
 - `GET /api/auto-generate`
+
+### Preview the best topic opportunities
+- `GET /api/topic-queue?limit=40`
+
+### Audit existing posts for weak pages
+- `GET /api/content-audit`
+
+### Discover additional tools
 - `GET /api/discover-tools?approve=true`
 
-Per Vercel docs, if you set `CRON_SECRET`, Vercel sends `Authorization: Bearer <CRON_SECRET>` automatically.
+## Recommended rollout order
 
-## Recommended immediate actions
+1. Rotate any leaked credentials.
+2. Deploy this package.
+3. Test `topic-queue` and `content-audit` first.
+4. Generate 5 pages and QA them manually.
+5. Push the strongest page types first:
+   - pricing
+   - versus
+   - switching guides
+   - best-for-role roundups
+6. Review Search Console before increasing publishing volume.
 
-1. Rotate any secrets that were previously committed or uploaded.
-2. Delete `.env.local`, `.next`, `.git`, and `node_modules` from deployment uploads.
-3. Connect Search Console and analytics before scaling content volume.
-4. Start by generating a small number of pages and review output quality.
-5. Only expand clusters that show impressions, CTR, and conversions.
+## Philosophy
 
-## Content model philosophy
-
-The goal is not to pause automation. The goal is to make automation honest:
-
-- search gathers current facts
-- structured product data supplies base fields
-- prompts synthesize tradeoffs and buying advice
-- pages expose research basis instead of pretending first-hand tests
-
-## Next recommended layer
-
-For a stronger production stack, add:
-
-- a proper database instead of Redis-only overlays
-- claim-level freshness timestamps for pricing/features
-- Search Console driven pruning + refresh jobs
-- a custom page score for thin content and duplicate intent
-- manual upgrade workflow for the top 20 revenue pages
+The aim is not “publish the most pages”.
+The aim is “publish the pages with the best chance of satisfying intent, earning trust, and making money”.

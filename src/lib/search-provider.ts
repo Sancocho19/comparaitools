@@ -13,6 +13,21 @@ export interface SearchResponse {
   sources: ResearchSource[];
 }
 
+const TRUSTED_NEWS = new Set([
+  'techcrunch.com',
+  'theverge.com',
+  'venturebeat.com',
+  'wired.com',
+  'reuters.com',
+  'openai.com',
+  'anthropic.com',
+  'google.com',
+  'blog.google',
+  'microsoft.com',
+  'notion.so',
+  'zapier.com',
+]);
+
 async function tavilySearch(search: SearchQuery): Promise<SearchResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) throw new Error('TAVILY_API_KEY missing');
@@ -27,7 +42,7 @@ async function tavilySearch(search: SearchQuery): Promise<SearchResponse> {
       search_depth: 'advanced',
       include_answer: false,
       include_raw_content: false,
-      max_results: 6,
+      max_results: 8,
       include_domains: search.includeDomains,
     }),
   });
@@ -47,17 +62,20 @@ async function tavilySearch(search: SearchQuery): Promise<SearchResponse> {
     reason: search.reason,
   }));
 
-  return { provider: 'tavily', sources };
+  return { provider: 'tavily', sources: rankSources(sources, search) };
 }
 
 async function serpApiSearch(search: SearchQuery): Promise<SearchResponse> {
   const apiKey = process.env.SERPAPI_KEY;
   if (!apiKey) throw new Error('SERPAPI_KEY missing');
+
   const params = new URLSearchParams({
     engine: 'google',
     q: search.query,
-    num: '6',
+    num: '8',
     api_key: apiKey,
+    hl: 'en',
+    gl: 'us',
   });
   if (search.includeDomains?.length) {
     params.set('q', `${search.query} ${search.includeDomains.map((domain) => `site:${domain}`).join(' OR ')}`);
@@ -67,6 +85,7 @@ async function serpApiSearch(search: SearchQuery): Promise<SearchResponse> {
   if (!response.ok) {
     throw new Error(`SerpApi search failed: ${response.status}`);
   }
+
   const data = await response.json();
   const sources: ResearchSource[] = (data.organic_results ?? []).map((item: any) => ({
     title: item.title ?? item.link,
@@ -76,7 +95,7 @@ async function serpApiSearch(search: SearchQuery): Promise<SearchResponse> {
     publishedAt: item.date,
     reason: search.reason,
   }));
-  return { provider: 'serpapi', sources };
+  return { provider: 'serpapi', sources: rankSources(sources, search) };
 }
 
 function safeDomain(url: string): string {
@@ -85,6 +104,45 @@ function safeDomain(url: string): string {
   } catch {
     return '';
   }
+}
+
+function rankSources(sources: ResearchSource[], search: SearchQuery): ResearchSource[] {
+  return sources
+    .map((source) => ({
+      source,
+      weight: scoreSource(source, search),
+    }))
+    .sort((a, b) => b.weight - a.weight)
+    .map((entry) => entry.source);
+}
+
+function scoreSource(source: ResearchSource, search: SearchQuery): number {
+  let score = source.score ?? 0;
+  const domain = source.domain;
+  const url = source.url.toLowerCase();
+  const title = source.title.toLowerCase();
+  const snippet = source.snippet.toLowerCase();
+
+  if (search.includeDomains?.some((candidate) => domain.includes(candidate.replace(/^www\./, '')))) score += 50;
+  if (TRUSTED_NEWS.has(domain)) score += 15;
+  if (/(pricing|plans|billing|subscription)/.test(url + ' ' + title)) score += 10;
+  if (/(docs|documentation|help|support|release|changelog|updates)/.test(url + ' ' + title)) score += 8;
+  if (/official|pricing|compare|alternatives/.test(snippet)) score += 3;
+  if (domain.includes('reddit.com') || domain.includes('quora.com')) score -= 10;
+  if (domain.includes('youtube.com')) score -= 6;
+  return score;
+}
+
+function capPerDomain(sources: ResearchSource[], maxPerDomain = 2): ResearchSource[] {
+  const counts = new Map<string, number>();
+  const out: ResearchSource[] = [];
+  for (const source of sources) {
+    const count = counts.get(source.domain) ?? 0;
+    if (count >= maxPerDomain) continue;
+    counts.set(source.domain, count + 1);
+    out.push(source);
+  }
+  return out;
 }
 
 export async function runSearchQueries(queries: SearchQuery[]): Promise<SearchResponse> {
@@ -99,8 +157,11 @@ export async function runSearchQueries(queries: SearchQuery[]): Promise<SearchRe
     allSources.push(...result.sources);
   }
 
+  const deduped = uniqueBy(allSources, (source) => source.url);
+  const reranked = rankSources(deduped, { query: 'global', reason: 'global' });
+
   return {
     provider,
-    sources: uniqueBy(allSources, (source) => source.url).slice(0, 18),
+    sources: capPerDomain(reranked, 2).slice(0, 18),
   };
 }

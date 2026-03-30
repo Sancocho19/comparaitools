@@ -1,6 +1,6 @@
 import tools from '@/data/tools.json';
 import type { BlogPost, GenerationState, ResearchBundle, Tool, ContentType } from '@/lib/types';
-import { CURRENT_YEAR } from '@/lib/site';
+import { BRAND_EDITOR, CURRENT_YEAR } from '@/lib/site';
 import { estimateReadingTime, makePairKey, slugify, stripHtml } from '@/lib/utils';
 import { runSearchQueries, type SearchQuery } from '@/lib/search-provider';
 
@@ -188,6 +188,7 @@ export async function buildResearchBundle(decision: ContentDecision): Promise<Re
       { query: `best ${decision.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Map current intent and list framing' },
       { query: `${decision.categoryLabel} ai tools pricing ${CURRENT_YEAR}`, reason: 'Capture commercial angles and buying tradeoffs' },
       { query: `${decision.categoryLabel} ai tools use cases ${CURRENT_YEAR}`, reason: 'Gather practical jobs-to-be-done and selection criteria' },
+      { query: `${decision.categoryLabel} ai tools for teams ${CURRENT_YEAR}`, reason: 'Find business-facing intent and buying signals', },
     );
   }
 
@@ -228,7 +229,9 @@ export function buildPrompt(decision: ContentDecision, research: ResearchBundle)
   const summary = summarizeDecision(decision);
   const sourceList = research.sources
     .slice(0, 12)
-    .map((source, index) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}\nReason: ${source.reason}\nSnippet: ${source.snippet}`)
+    .map((source, index) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}
+Reason: ${source.reason}
+Snippet: ${source.snippet}`)
     .join('\n\n');
 
   const decisionContext = (() => {
@@ -236,19 +239,32 @@ export function buildPrompt(decision: ContentDecision, research: ResearchBundle)
     switch (decision.type) {
       case 'review':
       case 'pricing':
-        return `Tool data:\n${JSON.stringify(decision.tool, null, 2)}`;
+        return `Tool data:
+${JSON.stringify(decision.tool, null, 2)}`;
       case 'comparison':
-        return `Tool A:\n${JSON.stringify(decision.toolA, null, 2)}\n\nTool B:\n${JSON.stringify(decision.toolB, null, 2)}`;
+        return `Tool A:
+${JSON.stringify(decision.toolA, null, 2)}
+
+Tool B:
+${JSON.stringify(decision.toolB, null, 2)}`;
       case 'roundup':
-        return `Roundup tools:\n${JSON.stringify(decision.tools, null, 2)}`;
+        return `Roundup tools:
+${JSON.stringify(decision.tools, null, 2)}`;
       case 'alternatives':
-        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nAlternatives:\n${JSON.stringify(decision.alternatives, null, 2)}`;
+        return `Primary tool:
+${JSON.stringify(decision.tool, null, 2)}
+
+Alternatives:
+${JSON.stringify(decision.alternatives, null, 2)}`;
       case 'guide':
-        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nGuide topic: ${decision.topic}`;
+        return `Primary tool:
+${JSON.stringify(decision.tool, null, 2)}
+
+Guide topic: ${decision.topic}`;
     }
   })();
 
-  return `You are the editorial research desk for ComparAITools. Write a genuinely useful, source-backed commercial article.
+  return `You are the editorial research desk for ${BRAND_EDITOR}. Write a genuinely useful, source-backed commercial article designed to rank because it helps buyers make a better software decision.
 
 CURRENT DATE: ${TODAY}
 ARTICLE TYPE: ${summary.type}
@@ -259,27 +275,37 @@ META DESCRIPTION GOAL: ${summary.description}
 MANDATORY RULES:
 - Do NOT claim personal use, hands-on testing, subscriptions, or fake experiments.
 - Do NOT write phrases like "I tested", "we tested", "our team found", or invent a founder persona.
-- Base every factual statement on the supplied live research sources or the structured tool data.
-- Add original value by explaining tradeoffs, fit, switching costs, and decision criteria.
+- Base factual statements on the supplied live research sources or the structured tool data.
+- Add original value by explaining tradeoffs, fit, switching costs, onboarding friction, and decision criteria.
 - When evidence is incomplete or mixed, say so plainly.
 - Keep the tone sharp, commercial, and human. No fluff, no AI clichés, no vague hype.
 - Mention the exact update date in the intro.
 - Output ONLY semantic HTML inside a single <article> element.
+- Include one <section id="quick-answer"> near the top with a direct recommendation.
+- Include one <section id="who-should-buy"> and one <section id="who-should-skip">.
+- Include one <section id="switching-costs"> when another tool is relevant.
 - Include one <section id="methodology"> describing how the article was assembled from live research and product data.
 - Include one <section id="sources"> with an ordered list of 5-12 cited sources using the supplied titles and URLs.
 - Include internal links where natural to /tools/[slug], /compare/[slugA-vs-slugB], /category/[category], and /blog.
-- Keep the article between 1,400 and 2,200 words.
+- Keep the article between 1,500 and 2,300 words.
 
 STRUCTURE TO FOLLOW:
 1. Intro with current context and what changed recently.
 2. Quick answer / verdict.
 3. Pricing or product snapshot.
 4. Best-fit scenarios.
-5. Where the tool wins / loses.
-6. Alternatives or comparison angle.
-7. Practical buying advice.
-8. Methodology.
-9. Sources.
+5. Who should buy / who should skip.
+6. Where the tool wins / loses.
+7. Alternatives or comparison angle.
+8. Practical buying advice.
+9. Methodology.
+10. Sources.
+
+WRITE FOR THESE OUTCOMES:
+- Satisfy the searcher without sounding generic.
+- Make at least three non-obvious buying points.
+- Explain why someone would regret the wrong choice.
+- Use short tables or bullet lists when it clarifies a decision.
 
 Use this decision context:
 ${decisionContext}

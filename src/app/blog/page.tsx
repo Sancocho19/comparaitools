@@ -194,8 +194,8 @@ export default async function BlogIndexPage() {
             </p>
             <div className="hero-card-points">
               <span>Live-source research</span>
-              <span>Commercial intent focus</span>
-              <span>Human-style structure</span>
+              <span>Commercial focus</span>
+              <span>Best filters</span>
             </div>
           </div>
         </div>

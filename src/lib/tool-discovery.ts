@@ -1,5 +1,5 @@
-
 import { runSearchQueries } from '@/lib/search-provider';
+import type { SearchQuery } from '@/lib/search-provider';
 import { slugify } from '@/lib/utils';
 
 type SearchSource = {
@@ -162,7 +162,7 @@ export async function discoverCandidates(existingSlugs: string[], limit = 8): Pr
   sources: SearchSource[];
   candidates: DiscoveryCandidate[];
 }> {
-  const queries = [
+  const queries: SearchQuery[] = [
     { query: 'new AI tools launched this month official site pricing', reason: 'Discover newly launched tools with official pages', topic: 'news' },
     { query: 'fastest growing AI tools 2026 official pricing', reason: 'Discover commercially relevant tools with growth', topic: 'news' },
     { query: 'AI startup product launch official pricing docs', reason: 'Find official sites, docs and pricing pages', topic: 'news' },

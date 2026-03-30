@@ -1,7 +1,7 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { bootstrapStaticTools, getAllTools, saveTool } from '@/lib/tools-storage';
 import { runSearchQueries } from '@/lib/search-provider';
+import type { SearchQuery } from '@/lib/search-provider';
 import { buildResearchRecord } from '@/lib/tool-discovery';
 
 export const runtime = 'nodejs';
@@ -97,15 +97,21 @@ export async function GET(request: NextRequest) {
 
     for (const tool of candidates) {
       try {
-        const queries = [
-          { query: `${tool.name} official site`, reason: 'Find official product page', topic: 'research' },
-          { query: `${tool.name} pricing official`, reason: 'Find official pricing page', topic: 'pricing' },
-          { query: `${tool.name} docs official`, reason: 'Find docs or help center', topic: 'docs' },
-          { query: `${tool.name} release notes OR changelog`, reason: 'Find recent update evidence', topic: 'docs' },
+        const queries: SearchQuery[] = [
+          { query: `${tool.name} official site`, reason: 'Find official product page', topic: 'general' },
+          { query: `${tool.name} pricing official`, reason: 'Find official pricing page', topic: 'general' },
+          { query: `${tool.name} docs official`, reason: 'Find docs or help center', topic: 'general' },
+          { query: `${tool.name} release notes OR changelog`, reason: 'Find recent update evidence', topic: 'news' },
         ];
 
         const result: any = await runSearchQueries(queries);
-        const research = buildResearchRecord(result?.provider ?? 'unknown', queries.map((q) => q.query), result?.sources ?? [], tool.name, [tool.url]);
+        const research = buildResearchRecord(
+          result?.provider ?? 'unknown',
+          queries.map((q) => q.query),
+          result?.sources ?? [],
+          tool.name,
+          [tool.url],
+        );
 
         const evidenceBundle = research.sources
           .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.url}\nDomain: ${source.domain}\nKind: ${source.kind}\nSnippet: ${source.snippet}`)

@@ -1,156 +1,188 @@
-// src/app/api/enrich-tools/route.ts
-// Re-enriquece tools con campos vacíos usando Claude
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllTools, saveTool, bootstrapStaticTools } from '@/lib/tools-storage';
+import { bootstrapStaticTools, getAllTools, saveTool } from '@/lib/tools-storage';
+import { runSearchQueries } from '@/lib/search-provider';
+import { buildResearchRecord } from '@/lib/tool-discovery';
 
-function isEmpty(val: any): boolean {
-  if (!val) return true;
-  if (typeof val === 'string') return val.trim().length < 5;
-  if (Array.isArray(val)) return val.length === 0 || val.every(v => !v || v.trim().length < 3);
-  return false;
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+function isAuthorized(request: NextRequest): boolean {
+  const expected = process.env.CRON_SECRET;
+  if (!expected) return false;
+  return request.headers.get('authorization') === `Bearer ${expected}` || request.nextUrl.searchParams.get('secret') === expected;
+}
+
+function cleanStr(input: unknown): string {
+  if (!input) return '';
+  return String(input).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function cleanArr(input: unknown, max = 6): string[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((value) => cleanStr(value))
+    .filter((value) => value.length > 2)
+    .slice(0, max);
+}
+
+async function askAnthropicForObject(prompt: string, maxTokens = 1800): Promise<any> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY missing');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      temperature: 0,
+      system: 'Return strict JSON only. No markdown. No HTML. Use only the evidence bundle provided.',
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Anthropic error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.content?.find((part: any) => part.type === 'text')?.text ?? '{}';
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Model did not return JSON');
+    return JSON.parse(match[0]);
+  }
 }
 
 function needsEnrichment(tool: any): boolean {
+  const researchScore = Number(tool?.evidenceScore ?? tool?.research?.evidenceScore ?? 0);
   return (
-    isEmpty(tool.description) ||
-    isEmpty(tool.longDescription) ||
-    isEmpty(tool.bestFor) ||
-    isEmpty(tool.features) ||
-    isEmpty(tool.pros) ||
-    isEmpty(tool.cons)
+    !tool?.description ||
+    !tool?.longDescription ||
+    !tool?.bestFor ||
+    !Array.isArray(tool?.features) ||
+    tool.features.length < 3 ||
+    researchScore < 70
   );
 }
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret');
-  const slug   = request.nextUrl.searchParams.get('slug'); // optional: enrich specific tool
-
-  if (secret !== process.env.CRON_SECRET) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'No API key' }, { status: 500 });
+  const slug = request.nextUrl.searchParams.get('slug');
+  const autoPublish = request.nextUrl.searchParams.get('publish') === 'true';
 
   try {
     await bootstrapStaticTools();
     const allTools = await getAllTools();
+    const candidates = slug
+      ? allTools.filter((tool) => tool.slug === slug)
+      : allTools.filter((tool) => tool.source === 'discovered' && needsEnrichment(tool)).slice(0, 10);
 
-    // Find tools that need enrichment
-    const toEnrich = slug
-      ? allTools.filter(t => t.slug === slug)
-      : allTools.filter(t => t.source === 'discovered' && needsEnrichment(t));
-
-    if (toEnrich.length === 0) {
-      return NextResponse.json({ success: true, message: 'All tools already have complete data' });
+    if (!candidates.length) {
+      return NextResponse.json({ success: true, message: 'No tools need enrichment right now.' });
     }
 
-    const enriched: string[] = [];
-    const failed:   string[] = [];
+    const enriched: any[] = [];
+    const failed: any[] = [];
 
-    for (const tool of toEnrich) {
+    for (const tool of candidates) {
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1500,
-            system: `You are an AI tools researcher. Generate accurate, complete data about AI tools.
-CRITICAL: Output ONLY valid JSON, no markdown, no code fences, no HTML, no citations.
-All values must be plain text strings only.`,
-            messages: [{
-              role: 'user',
-              content: `Generate complete, accurate data for this AI tool: "${tool.name}" by ${tool.company}.
-Website: ${tool.url}
-Category: ${tool.categoryLabel}
-Pricing: ${tool.pricing}
+        const queries = [
+          { query: `${tool.name} official site`, reason: 'Find official product page', topic: 'research' },
+          { query: `${tool.name} pricing official`, reason: 'Find official pricing page', topic: 'pricing' },
+          { query: `${tool.name} docs official`, reason: 'Find docs or help center', topic: 'docs' },
+          { query: `${tool.name} release notes OR changelog`, reason: 'Find recent update evidence', topic: 'docs' },
+        ];
 
-Return ONLY this JSON object with no other text:
+        const result: any = await runSearchQueries(queries);
+        const research = buildResearchRecord(result?.provider ?? 'unknown', queries.map((q) => q.query), result?.sources ?? [], tool.name, [tool.url]);
+
+        const evidenceBundle = research.sources
+          .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.url}\nDomain: ${source.domain}\nKind: ${source.kind}\nSnippet: ${source.snippet}`)
+          .join('\n\n');
+
+        const prompt = `You are enriching a database entry for an AI tool.
+Use ONLY the evidence bundle below. If something is not supported, leave it conservative and generic.
+Return ONLY JSON with:
 {
-  "description": "One clear sentence explaining what ${tool.name} does and who it's for",
-  "longDescription": "2-3 sentences with more detail about ${tool.name}'s main capabilities and value proposition",
-  "bestFor": "Specific type of user or use case, e.g. 'Video creators who need AI-generated footage'",
-  "features": [
-    "Specific feature name 1",
-    "Specific feature name 2",
-    "Specific feature name 3",
-    "Specific feature name 4",
-    "Specific feature name 5"
-  ],
-  "pros": [
-    "Specific advantage 1 of ${tool.name}",
-    "Specific advantage 2 of ${tool.name}",
-    "Specific advantage 3 of ${tool.name}",
-    "Specific advantage 4 of ${tool.name}"
-  ],
-  "cons": [
-    "Specific limitation 1 of ${tool.name}",
-    "Specific limitation 2 of ${tool.name}",
-    "Specific limitation 3 of ${tool.name}"
-  ]
-}`,
-            }],
-          }),
-        });
+  "description": string,
+  "longDescription": string,
+  "bestFor": string,
+  "features": string[],
+  "pros": string[],
+  "cons": string[],
+  "pricing": string,
+  "pricingValue": number,
+  "company": string,
+  "url": string
+}
 
-        const data = await response.json();
-        if (data.error) { failed.push(tool.name); continue; }
+Tool:
+Name: ${tool.name}
+Current company: ${tool.company}
+Current website: ${tool.url}
+Current category: ${tool.categoryLabel}
 
-        const rawText = data.content?.filter((b: any) => b.type === 'text')?.map((b: any) => b.text)?.join('') ?? '';
+Evidence bundle:
+${evidenceBundle}`;
 
-        let enrichedData: any = {};
-        try {
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) enrichedData = JSON.parse(jsonMatch[0]);
-        } catch { failed.push(tool.name); continue; }
-
-        // Validate parsed data
-        if (!enrichedData.description || enrichedData.description.length < 10) {
-          failed.push(tool.name + ' (bad data)');
-          continue;
-        }
-
-        // Clean any accidental HTML
-        const cleanStr = (s: any) => typeof s === 'string' ? s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
-        const cleanArr = (a: any) => Array.isArray(a) ? a.map(cleanStr).filter(s => s.length > 3) : [];
-
-        // Update tool with enriched data
-        const updatedTool = {
+        const payload = await askAnthropicForObject(prompt, 2200);
+        const updatedTool: any = {
           ...tool,
-          description:     cleanStr(enrichedData.description),
-          longDescription: cleanStr(enrichedData.longDescription),
-          bestFor:         cleanStr(enrichedData.bestFor),
-          features:        cleanArr(enrichedData.features).slice(0, 5),
-          pros:            cleanArr(enrichedData.pros).slice(0, 4),
-          cons:            cleanArr(enrichedData.cons).slice(0, 3),
+          company: cleanStr(payload.company) || tool.company,
+          url: cleanStr(payload.url) || tool.url,
+          description: cleanStr(payload.description) || tool.description,
+          longDescription: cleanStr(payload.longDescription) || tool.longDescription || tool.description,
+          bestFor: cleanStr(payload.bestFor) || tool.bestFor,
+          features: cleanArr(payload.features, 6).length ? cleanArr(payload.features, 6) : tool.features,
+          pros: cleanArr(payload.pros, 4).length ? cleanArr(payload.pros, 4) : tool.pros,
+          cons: cleanArr(payload.cons, 4).length ? cleanArr(payload.cons, 4) : tool.cons,
+          pricing: cleanStr(payload.pricing) || tool.pricing,
+          pricingValue: Number.isFinite(Number(payload.pricingValue)) ? Number(payload.pricingValue) : tool.pricingValue,
+          lastUpdated: new Date().toISOString().slice(0, 10),
+          evidenceScore: research.evidenceScore,
+          sourceCount: research.sourceCount,
+          research,
         };
 
-        await saveTool(updatedTool);
-        enriched.push(tool.name);
+        if (autoPublish && research.evidenceScore >= 78 && research.officialSourceCount >= 2) {
+          updatedTool.verified = true;
+          updatedTool.status = 'published';
+        }
 
-        // Small delay to avoid rate limits
-        await new Promise(r => setTimeout(r, 500));
+        await saveTool(updatedTool as any);
+        enriched.push({
+          slug: updatedTool.slug,
+          name: updatedTool.name,
+          evidenceScore: research.evidenceScore,
+          sourceCount: research.sourceCount,
+          officialSourceCount: research.officialSourceCount,
+        });
 
-      } catch (err: any) {
-        failed.push(tool.name + ': ' + err.message);
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      } catch (error: any) {
+        failed.push({ slug: tool.slug, name: tool.name, error: error?.message ?? 'Unknown error' });
       }
     }
 
     return NextResponse.json({
       success: true,
+      enrichedCount: enriched.length,
+      failedCount: failed.length,
       enriched,
       failed,
-      message: `Enriched ${enriched.length} tools. ${failed.length} failed.`,
-      total: toEnrich.length,
     });
-
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error?.message ?? 'Unknown enrichment error' }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+
 import baseTools from '@/data/tools.json';
 import { getRedis } from '@/lib/redis';
 import type { Tool } from '@/lib/types';
@@ -14,8 +15,8 @@ const K = {
 function normalizeBaseTools(): Tool[] {
   return (baseTools as Tool[]).map((tool) => ({
     ...tool,
-    source: tool.source ?? 'static',
-    verified: tool.verified ?? true,
+    source: (tool as any).source ?? 'static',
+    verified: (tool as any).verified ?? true,
     status: 'published',
   }));
 }
@@ -39,12 +40,18 @@ async function getRedisTools(): Promise<Tool[]> {
   return items.filter(Boolean) as Tool[];
 }
 
+function dedupeTools(tools: Tool[]): Tool[] {
+  return uniqueBy(
+    tools,
+    (tool) => `${tool.slug}|${tool.url?.replace(/^https?:\/\//, '').replace(/^www\./, '')}`
+  );
+}
+
 export async function getAllTools(): Promise<Tool[]> {
   const staticTools = normalizeBaseTools();
   const dynamicTools = await getRedisTools();
-  return uniqueBy(
-    [...staticTools, ...dynamicTools].filter((tool) => tool.verified !== false),
-    (tool) => tool.slug,
+  return dedupeTools(
+    [...staticTools, ...dynamicTools].filter((tool) => (tool as any).verified !== false)
   ).sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
 }
 
@@ -73,11 +80,14 @@ export async function getCategories(): Promise<{ category: string; categoryLabel
 
 export async function saveTool(tool: Tool): Promise<void> {
   if (!redis) return;
-  const normalized: Tool = {
-    ...tool,
-    verified: tool.verified ?? true,
-    source: tool.source ?? 'discovered',
-    status: tool.status ?? 'published',
+  const incoming: any = tool;
+  const existing = incoming.slug ? await redis.get<any>(K.TOOL(incoming.slug)) : null;
+  const normalized: any = {
+    ...(existing ?? {}),
+    ...incoming,
+    verified: incoming.verified ?? existing?.verified ?? true,
+    source: incoming.source ?? existing?.source ?? 'discovered',
+    status: incoming.status ?? existing?.status ?? 'published',
   };
   await redis.set(K.TOOL(normalized.slug), normalized);
   const slugs = (await redis.get<string[]>(K.INDEX)) ?? [];
@@ -93,9 +103,35 @@ export async function getPendingTools(): Promise<Tool[]> {
 
 export async function addPendingTool(tool: Tool): Promise<void> {
   if (!redis) return;
+  const incoming: any = tool;
   const pending = await getPendingTools();
-  if (pending.some((item) => item.slug === tool.slug)) return;
-  await redis.set(K.PENDING, [...pending, { ...tool, verified: false, status: 'pending' }]);
+  const existingIndex = pending.findIndex((item: any) =>
+    item.slug === incoming.slug ||
+    item.url === incoming.url ||
+    item.name?.toLowerCase() === incoming.name?.toLowerCase()
+  );
+
+  const normalized: any = {
+    ...incoming,
+    verified: false,
+    status: 'pending',
+    source: incoming.source ?? 'discovered',
+  };
+
+  if (existingIndex >= 0) {
+    const merged = [...pending];
+    merged[existingIndex] = {
+      ...merged[existingIndex],
+      ...normalized,
+      research: normalized.research ?? (merged[existingIndex] as any).research,
+      evidenceScore: normalized.evidenceScore ?? (merged[existingIndex] as any).evidenceScore ?? 0,
+      sourceCount: normalized.sourceCount ?? (merged[existingIndex] as any).sourceCount ?? 0,
+    };
+    await redis.set(K.PENDING, merged);
+    return;
+  }
+
+  await redis.set(K.PENDING, [...pending, normalized]);
 }
 
 export async function approvePendingTool(slug: string): Promise<void> {
@@ -103,7 +139,12 @@ export async function approvePendingTool(slug: string): Promise<void> {
   const pending = await getPendingTools();
   const match = pending.find((tool) => tool.slug === slug);
   if (!match) return;
-  await saveTool({ ...match, verified: true, status: 'published', lastUpdated: new Date().toISOString().slice(0, 10) });
+  await saveTool({
+    ...(match as any),
+    verified: true,
+    status: 'published',
+    lastUpdated: new Date().toISOString().slice(0, 10),
+  } as Tool);
   await redis.set(K.PENDING, pending.filter((tool) => tool.slug !== slug));
 }
 

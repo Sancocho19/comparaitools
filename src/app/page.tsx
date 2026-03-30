@@ -7,6 +7,15 @@ export const revalidate = 3600;
 
 type ToolItem = Awaited<ReturnType<typeof getAllTools>>[number];
 
+type ToolWithResearch = ToolItem & {
+  evidenceScore?: number;
+  sourceCount?: number;
+  research?: {
+    evidenceScore?: number;
+    sourceCount?: number;
+  };
+};
+
 function Stars({ rating }: { rating: number }) {
   return (
     <span className="text-[var(--orange)] text-sm">
@@ -16,12 +25,14 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function getEvidenceScore(tool: Partial<ToolItem>): number {
-  return Number(tool.evidenceScore ?? tool.research?.evidenceScore ?? 0);
+function getEvidenceScore(tool: ToolItem): number {
+  const typed = tool as ToolWithResearch;
+  return Number(typed.evidenceScore ?? typed.research?.evidenceScore ?? 0);
 }
 
-function getSourceCount(tool: Partial<ToolItem>): number {
-  return Number(tool.sourceCount ?? tool.research?.sourceCount ?? 0);
+function getSourceCount(tool: ToolItem): number {
+  const typed = tool as ToolWithResearch;
+  return Number(typed.sourceCount ?? typed.research?.sourceCount ?? 0);
 }
 
 export default async function HomePage() {

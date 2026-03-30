@@ -81,7 +81,7 @@ export default async function BlogIndexPage() {
   const comparisons = posts.filter((p) => p.type === 'comparison');
   const roundups = posts.filter((p) => p.type === 'roundup');
   const guides = posts.filter((p) => p.type === 'guide' || p.type === 'pricing');
-  const opinions = posts.filter((p) => p.type === 'opinion' || p.category === 'opinion');
+  const opinions = posts.filter((p) => p.category === 'opinion');
   const featured = posts.slice(0, 3);
 
   const schemaOrg = {

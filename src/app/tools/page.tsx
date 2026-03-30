@@ -38,6 +38,15 @@ function getSourceCount(tool: ToolItem): number {
   return Number(typed.sourceCount ?? typed.research?.sourceCount ?? 0);
 }
 
+function buildToolsUrl(category: string, source: string, sort: string): string {
+  const params = new URLSearchParams();
+  if (category !== 'all') params.set('category', category);
+  if (source !== 'all') params.set('source', source);
+  if (sort !== 'evidence') params.set('sort', sort);
+  const query = params.toString();
+  return query ? `/tools?${query}` : '/tools';
+}
+
 export default async function ToolsPage({
   searchParams,
 }: {
@@ -94,6 +103,11 @@ export default async function ToolsPage({
     })),
   };
 
+  const pillBase = {
+    border: '1px solid var(--border)',
+    textDecoration: 'none',
+  } as const;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }} />
@@ -137,72 +151,95 @@ export default async function ToolsPage({
           </p>
         </div>
 
-        <div className="grid gap-3 mb-8 md:grid-cols-[1fr_auto_auto]">
-          <div className="flex flex-wrap gap-2">
-            <Link href="/tools" className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-              style={{
-                background: activeCategory === "all" ? "var(--accent)" : "var(--bg-card)",
-                color: activeCategory === "all" ? "var(--bg)" : "var(--text-muted)",
-                border: "1px solid var(--border)",
-              }}>
-              All ({verified.length})
-            </Link>
-            {categories.map((cat) => (
-              <Link key={cat.category} href={`/tools?category=${cat.category}${activeSource !== 'all' ? `&source=${activeSource}` : ''}${activeSort !== 'evidence' ? `&sort=${activeSort}` : ''}`}
-                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                style={{
-                  background: activeCategory === cat.category ? "var(--accent)" : "var(--bg-card)",
-                  color: activeCategory === cat.category ? "var(--bg)" : "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                }}>
-                {cat.label} ({cat.count})
-              </Link>
-            ))}
-          </div>
+        <section className="rounded-2xl p-4 sm:p-5 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="grid gap-5 lg:grid-cols-[1.8fr_1fr_1fr] lg:items-start">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[2px] text-[var(--text-dim)] mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+                Categories
+              </div>
+              <div className="flex flex-wrap gap-2 items-start content-start">
+                <Link
+                  href={buildToolsUrl('all', activeSource, activeSort)}
+                  className="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold leading-none whitespace-nowrap"
+                  style={{
+                    ...pillBase,
+                    background: activeCategory === 'all' ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                    color: activeCategory === 'all' ? 'var(--bg)' : 'var(--text-muted)',
+                  }}
+                >
+                  All ({verified.length})
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.category}
+                    href={buildToolsUrl(cat.category, activeSource, activeSort)}
+                    className="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold leading-none whitespace-nowrap"
+                    style={{
+                      ...pillBase,
+                      background: activeCategory === cat.category ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                      color: activeCategory === cat.category ? 'var(--bg)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {cat.label} ({cat.count})
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { key: 'all', label: 'All sources' },
-              { key: 'static', label: 'Static' },
-              { key: 'discovered', label: 'Discovered' },
-            ].map((item) => (
-              <Link
-                key={item.key}
-                href={`/tools?${activeCategory !== 'all' ? `category=${activeCategory}&` : ''}${item.key !== 'all' ? `source=${item.key}&` : ''}${activeSort !== 'evidence' ? `sort=${activeSort}` : ''}`.replace(/[&?]$/, '') || '/tools'}
-                className="px-4 py-2 rounded-xl text-sm font-semibold"
-                style={{
-                  background: activeSource === item.key ? 'var(--accent)' : 'var(--bg-card)',
-                  color: activeSource === item.key ? 'var(--bg)' : 'var(--text-muted)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+            <div className="self-start">
+              <div className="text-[11px] font-bold uppercase tracking-[2px] text-[var(--text-dim)] mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+                Source
+              </div>
+              <div className="flex flex-wrap gap-2 items-start content-start">
+                {[
+                  { key: 'all', label: 'All sources' },
+                  { key: 'static', label: 'Static' },
+                  { key: 'discovered', label: 'Discovered' },
+                ].map((item) => (
+                  <Link
+                    key={item.key}
+                    href={buildToolsUrl(activeCategory, item.key, activeSort)}
+                    className="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold leading-none whitespace-nowrap self-start h-auto"
+                    style={{
+                      ...pillBase,
+                      background: activeSource === item.key ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                      color: activeSource === item.key ? 'var(--bg)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-          <div className="flex gap-2 flex-wrap justify-start md:justify-end">
-            {[
-              { key: 'evidence', label: 'Top evidence' },
-              { key: 'rating', label: 'Top rated' },
-              { key: 'sources', label: 'Most sources' },
-              { key: 'new', label: 'Newest' },
-            ].map((item) => (
-              <Link
-                key={item.key}
-                href={`/tools?${activeCategory !== 'all' ? `category=${activeCategory}&` : ''}${activeSource !== 'all' ? `source=${activeSource}&` : ''}${item.key !== 'evidence' ? `sort=${item.key}` : ''}`.replace(/[&?]$/, '') || '/tools'}
-                className="px-4 py-2 rounded-xl text-sm font-semibold"
-                style={{
-                  background: activeSort === item.key ? 'var(--accent)' : 'var(--bg-card)',
-                  color: activeSort === item.key ? 'var(--bg)' : 'var(--text-muted)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
+            <div className="self-start">
+              <div className="text-[11px] font-bold uppercase tracking-[2px] text-[var(--text-dim)] mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+                Sort
+              </div>
+              <div className="flex flex-wrap gap-2 items-start content-start">
+                {[
+                  { key: 'evidence', label: 'Top evidence' },
+                  { key: 'rating', label: 'Top rated' },
+                  { key: 'sources', label: 'Most sources' },
+                  { key: 'new', label: 'Newest' },
+                ].map((item) => (
+                  <Link
+                    key={item.key}
+                    href={buildToolsUrl(activeCategory, activeSource, item.key)}
+                    className="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold leading-none whitespace-nowrap self-start h-auto"
+                    style={{
+                      ...pillBase,
+                      background: activeSort === item.key ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                      color: activeSort === item.key ? 'var(--bg)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sorted.map((tool) => {

@@ -47,22 +47,26 @@ type ManualSelection = {
   slugB?: string;
 };
 
-async function loadTopicQueue(mode: string): Promise<Opportunity[]> {
+async function loadTopicQueue(queueMode: string): Promise<Opportunity[]> {
   const topicPlannerMod: any = await import('@/lib/topic-planner');
 
-  if (typeof topicPlannerMod.buildTopicQueue === 'function') {
-    const data = await topicPlannerMod.buildTopicQueue(mode);
+  const queueFns = [
+    topicPlannerMod.buildTopicQueue,
+    topicPlannerMod.getTopicQueue,
+    topicPlannerMod.buildOpportunityQueue,
+  ].filter((fn) => typeof fn === 'function');
+
+  if (!queueFns.length) {
+    throw new Error('No compatible topic queue builder found in src/lib/topic-planner.ts');
+  }
+
+  for (const fn of queueFns) {
+    const data = await fn(60, queueMode);
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.opportunities)) return data.opportunities;
   }
 
-  if (typeof topicPlannerMod.getTopicQueue === 'function') {
-    const data = await topicPlannerMod.getTopicQueue(mode);
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.opportunities)) return data.opportunities;
-  }
-
-  throw new Error('No compatible topic queue builder found in src/lib/topic-planner.ts');
+  throw new Error('Topic queue builder returned no usable opportunities');
 }
 
 function chooseRandomOpportunity(opportunities: Opportunity[], requestedPageType?: string): Opportunity | null {
@@ -165,7 +169,7 @@ async function generateFromSelection(selection: Opportunity): Promise<any> {
     contentEngineMod.generateContentFromOpportunity,
     contentEngineMod.generatePost,
     contentEngineMod.generateContent,
-  ].filter(Boolean);
+  ].filter((fn) => typeof fn === 'function');
 
   if (!candidateFns.length) {
     throw new Error('No compatible generator found in src/lib/content-engine.ts');

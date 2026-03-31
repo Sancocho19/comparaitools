@@ -476,6 +476,8 @@ export async function generatePostFromOpportunity(opportunity: Opportunity): Pro
   const rawHtml = await askAnthropicForHtml(prompt, 3400);
   const content = normalizeHtmlContent(rawHtml);
   const seo = generateSEOMetadata(decision, content);
+  const { title: _seoTitle, schemaOrg: seoSchemaOrg, ...seoRest } = seo;
+
   const summary = summarizeDecision(decision);
   const title = deriveTitleFromOpportunity(opportunity, decision);
   const slug = generateSlug(decision);
@@ -490,13 +492,13 @@ export async function generatePostFromOpportunity(opportunity: Opportunity): Pro
     toolSlugs: summary.toolSlugs,
     category: summary.category,
     schemaOrg: {
-      ...seo.schemaOrg,
+      ...seoSchemaOrg,
       author: { '@type': 'Organization', name: BRAND_EDITOR ?? 'ComparAITools Research Desk' },
       datePublished: new Date().toISOString(),
       dateModified: new Date().toISOString(),
       mainEntityOfPage: `/blog/${slug}`,
     },
-    ...seo,
+    ...seoRest,
     research,
     evidenceScore: research.evidenceScore,
     sourceCount: research.sources.length,

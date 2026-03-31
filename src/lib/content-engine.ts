@@ -44,6 +44,14 @@ export type Opportunity = {
   clusterLabel?: string;
 };
 
+export type GenerationOptions = {
+  minWords?: number;
+  faqCount?: number;
+  internalLinkCount?: number;
+  maxTokens?: number;
+  queueMode?: string;
+};
+
 export type ContentDecision =
   | { type: 'review'; tool: ToolLike }
   | { type: 'comparison'; toolA: ToolLike; toolB: ToolLike }
@@ -309,21 +317,86 @@ export async function buildResearchBundle(decision: ContentDecision): Promise<Re
   } as ResearchBundle;
 }
 
-export function buildPrompt(decision: ContentDecision, research: ResearchBundle): string {
+
+function getToolBySlug(slug: string): ToolLike | undefined {
+  return STATIC_TOOLS.find((tool) => tool.slug === slug) as ToolLike | undefined;
+}
+
+function buildInternalLinkTargets(decision: ContentDecision, limit = 6): Array<{ href: string; label: string }> {
+  const links: Array<{ href: string; label: string }> = [];
+  const push = (href: string, label: string) => {
+    if (!href || !label) return;
+    if (links.some((item) => item.href === href)) return;
+    links.push({ href, label });
+  };
+
+  if (!decision) return links;
+
+  if (decision.type === 'pricing' || decision.type === 'review' || decision.type === 'guide') {
+    push(`/tools/${decision.tool.slug}`, `${decision.tool.name} overview`);
+    push(`/blog/${decision.tool.slug}-pricing-${CURRENT_YEAR}`, `${decision.tool.name} pricing`);
+    push(`/blog/${decision.tool.slug}-alternatives-${CURRENT_YEAR}`, `${decision.tool.name} alternatives`);
+    for (const alt of sameCategoryTools(decision.tool, STATIC_TOOLS as ToolLike[]).slice(0, 2)) {
+      push(`/compare/${[decision.tool.slug, alt.slug].sort().join('-vs-')}`, `${decision.tool.name} vs ${alt.name}`);
+    }
+  } else if (decision.type === 'alternatives') {
+    push(`/tools/${decision.tool.slug}`, `${decision.tool.name} overview`);
+    push(`/blog/${decision.tool.slug}-pricing-${CURRENT_YEAR}`, `${decision.tool.name} pricing`);
+    for (const alt of decision.alternatives.slice(0, 3)) {
+      push(`/tools/${alt.slug}`, `${alt.name} overview`);
+      push(`/compare/${[decision.tool.slug, alt.slug].sort().join('-vs-')}`, `${decision.tool.name} vs ${alt.name}`);
+    }
+  } else if (decision.type === 'comparison') {
+    push(`/tools/${decision.toolA.slug}`, `${decision.toolA.name} overview`);
+    push(`/tools/${decision.toolB.slug}`, `${decision.toolB.name} overview`);
+    push(`/blog/${decision.toolA.slug}-pricing-${CURRENT_YEAR}`, `${decision.toolA.name} pricing`);
+    push(`/blog/${decision.toolB.slug}-pricing-${CURRENT_YEAR}`, `${decision.toolB.name} pricing`);
+    push(`/blog/${decision.toolA.slug}-alternatives-${CURRENT_YEAR}`, `${decision.toolA.name} alternatives`);
+    push(`/blog/${decision.toolB.slug}-alternatives-${CURRENT_YEAR}`, `${decision.toolB.name} alternatives`);
+  } else if (decision.type === 'roundup') {
+    for (const tool of decision.tools.slice(0, 4)) {
+      push(`/tools/${tool.slug}`, `${tool.name} overview`);
+      push(`/blog/${tool.slug}-pricing-${CURRENT_YEAR}`, `${tool.name} pricing`);
+    }
+  }
+
+  return links.slice(0, limit);
+}
+
+function buildInternalLinksInstructions(decision: ContentDecision, limit = 4): string {
+  const targets = buildInternalLinkTargets(decision, Math.max(2, limit));
+  if (!targets.length) return 'Add 2-4 relevant internal links to other pages on the site where appropriate.';
+  return `Include at least ${Math.min(limit, targets.length)} natural internal links using exact relative URLs from this approved list:\n${targets.map((t) => `- ${t.label}: ${t.href}`).join('\n')}`;
+}
+
+function appendInternalLinksSection(content: string, decision: ContentDecision, limit = 4): string {
+  const targets = buildInternalLinkTargets(decision, Math.max(3, limit));
+  if (!targets.length) return content;
+  const section = `\n<section class="related-reading"><h2>Related reading</h2><ul>${targets.map((link) => `<li><a href="${link.href}">${link.label}</a></li>`).join('')}</ul></section>`;
+  if (content.includes('class="related-reading"')) return content;
+  return `${content.trim()}${section}`;
+}
+
+export function buildPrompt(decision: ContentDecision, research: ResearchBundle, options: GenerationOptions = {}): string {
   const summary = summarizeDecision(decision);
   const sourceList = (research.sources ?? [])
     .slice(0, 12)
     .map((source: any, index: number) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}\nReason: ${source.reason ?? 'Supporting evidence'}\nSnippet: ${source.snippet}`)
     .join('\n\n');
 
+  const minWords = Math.max(1200, Number(options.minWords ?? 1800));
+  const faqCount = Math.max(4, Number(options.faqCount ?? 5));
+  const internalLinkCount = Math.max(3, Number(options.internalLinkCount ?? 4));
+
   return `You are ${BRAND_EDITOR ?? 'ComparAITools Research Desk'}, writing a ${summary.type} article for a commercial AI tools site.
 
 Goal:
 - Write a genuinely useful, SEO-strong, human-readable article.
 - Use only supported facts from the research bundle and tool data.
-- Be explicit about tradeoffs.
+- Be explicit about tradeoffs and buying decisions.
 - No fake personal testing. No pretending you used the product unless evidence explicitly supports it.
 - Output clean HTML only for the article body. No markdown. No code fences.
+- Write at least ${minWords} words. Do not be brief.
 
 Article brief:
 Title: ${summary.title}
@@ -335,16 +408,27 @@ Date context: ${TODAY}
 Research bundle:
 ${sourceList}
 
-Required structure:
-- Intro with buying intent context
-- Quick verdict / who it is for
-- Pricing / value section when relevant
-- Strengths and tradeoffs
-- Best alternatives or comparisons when relevant
-- Clear conclusion
-- FAQ section with 3 short FAQs
+Internal SEO instructions:
+${buildInternalLinksInstructions(decision, internalLinkCount)}
 
-Make the article complete enough to rank and satisfy search intent.`;
+Required structure:
+- Intro with buying-intent context
+- Quick verdict / who it is for
+- Detailed pricing and value section when relevant
+- Feature depth and workflow fit
+- Strengths and tradeoffs
+- Who should buy it vs who should skip it
+- Best alternatives or comparisons when relevant
+- Value for money analysis
+- Final verdict
+- FAQ section with ${faqCount} short FAQs
+
+Important writing rules:
+- Use descriptive subheadings.
+- Mention concrete plan differences, upgrade thresholds, or tradeoffs where supported.
+- Include specific internal links naturally inside the article using <a href="/...">anchor text</a>.
+- Do not end up with a thin article. Expand sections with useful buying guidance, examples, and edge cases.
+- The article must feel complete enough to satisfy search intent on its own.`;
 }
 
 export function generateSEOMetadata(decision: ContentDecision, content: string): Pick<BlogPost, 'title' | 'metaTitle' | 'metaDescription' | 'primaryKeyword' | 'keywords' | 'excerpt' | 'wordCount' | 'readingTime' | 'schemaOrg'> {
@@ -469,15 +553,28 @@ function deriveTitleFromOpportunity(opportunity: Opportunity, decision: ContentD
   return opportunity.title || summary.title;
 }
 
-export async function generatePostFromOpportunity(opportunity: Opportunity): Promise<any> {
+export async function generatePostFromOpportunity(opportunity: Opportunity, options: GenerationOptions = {}): Promise<any> {
   const decision = await buildDecisionFromOpportunity(opportunity);
   const research = await buildResearchBundle(decision);
-  const prompt = buildPrompt(decision, research);
-  const rawHtml = await askAnthropicForHtml(prompt, 3400);
-  const content = normalizeHtmlContent(rawHtml);
+  const prompt = buildPrompt(decision, research, options);
+
+  const minWords = Math.max(1200, Number(options.minWords ?? 1800));
+  const maxTokens = Math.max(3400, Number(options.maxTokens ?? Math.round(minWords * 2.6)));
+
+  let rawHtml = await askAnthropicForHtml(prompt, maxTokens);
+  let content = normalizeHtmlContent(rawHtml);
+
+  const firstWordCount = stripHtml(content).split(/\s+/).filter(Boolean).length;
+  if (firstWordCount < minWords * 0.8) {
+    const retryPrompt = `${prompt}\n\nYour previous draft was too short at roughly ${firstWordCount} words. Rewrite it to at least ${minWords} words, keep the same title and intent, and make the article substantially more detailed.`;
+    rawHtml = await askAnthropicForHtml(retryPrompt, Math.max(maxTokens, 4800));
+    content = normalizeHtmlContent(rawHtml);
+  }
+
+  content = appendInternalLinksSection(content, decision, Number(options.internalLinkCount ?? 4));
+
   const seo = generateSEOMetadata(decision, content);
   const { title: _seoTitle, schemaOrg: seoSchemaOrg, ...seoRest } = seo;
-
   const summary = summarizeDecision(decision);
   const title = deriveTitleFromOpportunity(opportunity, decision);
   const slug = generateSlug(decision);
@@ -503,6 +600,7 @@ export async function generatePostFromOpportunity(opportunity: Opportunity): Pro
     evidenceScore: research.evidenceScore,
     sourceCount: research.sources.length,
     sourceUrls: research.sources.map((source: any) => source.url),
+    relatedLinks: buildInternalLinkTargets(decision, Number(options.internalLinkCount ?? 4)),
   } satisfies Partial<BlogPost> & Record<string, any>;
 
   return {
@@ -518,14 +616,14 @@ export async function generatePostFromOpportunity(opportunity: Opportunity): Pro
   };
 }
 
-export async function generateContentFromOpportunity(opportunity: Opportunity): Promise<any> {
-  return generatePostFromOpportunity(opportunity);
+export async function generateContentFromOpportunity(opportunity: Opportunity, options: GenerationOptions = {}): Promise<any> {
+  return generatePostFromOpportunity(opportunity, options);
 }
 
-export async function generatePost(opportunity: Opportunity): Promise<any> {
-  return generatePostFromOpportunity(opportunity);
+export async function generatePost(opportunity: Opportunity, options: GenerationOptions = {}): Promise<any> {
+  return generatePostFromOpportunity(opportunity, options);
 }
 
-export async function generateContent(opportunity: Opportunity): Promise<any> {
-  return generatePostFromOpportunity(opportunity);
+export async function generateContent(opportunity: Opportunity, options: GenerationOptions = {}): Promise<any> {
+  return generatePostFromOpportunity(opportunity, options);
 }

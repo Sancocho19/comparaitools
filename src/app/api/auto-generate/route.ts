@@ -38,6 +38,9 @@ type Opportunity = {
   score?: number;
   clusterKey?: string;
   clusterLabel?: string;
+  competition?: string;
+  monetizationPriority?: number;
+  whyThisCanWin?: string;
 };
 
 type ManualSelection = {
@@ -45,6 +48,14 @@ type ManualSelection = {
   tool?: string;
   slugA?: string;
   slugB?: string;
+};
+
+type GeneratorOptions = {
+  minWords?: number;
+  faqCount?: number;
+  internalLinkCount?: number;
+  maxTokens?: number;
+  fast?: boolean;
 };
 
 async function loadTopicQueue(queueMode: string): Promise<Opportunity[]> {
@@ -69,19 +80,14 @@ async function loadTopicQueue(queueMode: string): Promise<Opportunity[]> {
   throw new Error('Topic queue builder returned no usable opportunities');
 }
 
-function chooseRandomOpportunity(
-  opportunities: Opportunity[],
-  requestedPageType?: string
-): Opportunity | null {
+function chooseRandomOpportunity(opportunities: Opportunity[], requestedPageType?: string): Opportunity | null {
   const filtered = requestedPageType
     ? opportunities.filter((item) => item.pageType === requestedPageType)
     : opportunities;
 
   if (!filtered.length) return null;
 
-  const sorted = [...filtered].sort(
-    (a, b) => Number(b.score ?? 0) - Number(a.score ?? 0)
-  );
+  const sorted = [...filtered].sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
   const topSlice = sorted.slice(0, Math.min(6, sorted.length));
   return topSlice[Math.floor(Math.random() * topSlice.length)] ?? null;
 }
@@ -97,9 +103,7 @@ function buildManualOpportunity(selection: ManualSelection): Opportunity {
   }
 
   if (pageType === 'comparison') {
-    if (!slugA || !slugB) {
-      throw new Error('slugA and slugB are required for comparison');
-    }
+    if (!slugA || !slugB) throw new Error('slugA and slugB are required for comparison');
     return {
       key: `manual-comparison-${slugA}-${slugB}`,
       title: `${slugA} vs ${slugB}`,
@@ -135,13 +139,10 @@ function buildManualOpportunity(selection: ManualSelection): Opportunity {
   };
 }
 
-async function selectOpportunity(
-  request: NextRequest
-): Promise<{ selection: Opportunity; selectionMode: string; queueSize: number }> {
+async function selectOpportunity(request: NextRequest): Promise<{ selection: Opportunity; selectionMode: string; queueSize: number }> {
   const mode = clean(request.nextUrl.searchParams.get('mode') ?? 'random').toLowerCase();
   const queueMode = clean(request.nextUrl.searchParams.get('queueMode') ?? 'money').toLowerCase();
-  const requestedPageType =
-    clean(request.nextUrl.searchParams.get('pageType')).toLowerCase() || undefined;
+  const requestedPageType = clean(request.nextUrl.searchParams.get('pageType')).toLowerCase() || undefined;
   const requestedKey = clean(request.nextUrl.searchParams.get('key'));
 
   const opportunities = await loadTopicQueue(queueMode);
@@ -166,21 +167,12 @@ async function selectOpportunity(
 
   const picked = chooseRandomOpportunity(opportunities, requestedPageType);
   if (!picked) {
-    throw new Error(
-      requestedPageType
-        ? `No opportunities found for pageType=${requestedPageType}`
-        : 'No opportunities found'
-    );
+    throw new Error(requestedPageType ? `No opportunities found for pageType=${requestedPageType}` : 'No opportunities found');
   }
-
-  return {
-    selection: picked,
-    selectionMode: requestedPageType ? 'random-filtered' : 'random',
-    queueSize,
-  };
+  return { selection: picked, selectionMode: requestedPageType ? 'random-filtered' : 'random', queueSize };
 }
 
-async function generateFromSelection(selection: Opportunity, options?: Record<string, any>): Promise<any> {
+async function generateFromSelection(selection: Opportunity, options?: GeneratorOptions): Promise<any> {
   const contentEngineMod: any = await import('@/lib/content-engine');
 
   const candidateFns = [
@@ -221,54 +213,69 @@ async function persistGeneratedPost(generated: any): Promise<{ saved: boolean; m
   }
 }
 
+function buildPreviewResponse(selection: Opportunity, selectionMode: string, queueSize: number, options: GeneratorOptions) {
+  const slug = clean(selection.key) || slugifyFallback(selection.title);
+  return {
+    success: true,
+    previewOnly: true,
+    mode: selectionMode,
+    queueSize,
+    key: selection.key,
+    pageType: selection.pageType,
+    title: selection.title,
+    slug,
+    url: `/blog/${slug}`,
+    primaryKeyword: selection.primaryKeyword ?? '',
+    secondaryKeywords: selection.secondaryKeywords ?? [],
+    toolSlugs: selection.toolSlugs ?? [],
+    score: Number(selection.score ?? 0),
+    competition: selection.competition ?? undefined,
+    monetizationPriority: selection.monetizationPriority ?? undefined,
+    whyThisCanWin: selection.whyThisCanWin ?? undefined,
+    generatorOptions: options,
+    selection,
+  };
+}
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const previewOnly = request.nextUrl.searchParams.get('preview') === 'true';
+  const fast = request.nextUrl.searchParams.get('fast') === 'true';
   const minWords = Number(request.nextUrl.searchParams.get('minWords') || 0);
   const faqCount = Number(request.nextUrl.searchParams.get('faqCount') || 0);
   const internalLinkCount = Number(request.nextUrl.searchParams.get('internalLinkCount') || 0);
   const maxTokens = Number(request.nextUrl.searchParams.get('maxTokens') || 0);
 
+  const options: GeneratorOptions = {
+    fast,
+    minWords: Number.isFinite(minWords) && minWords > 0 ? minWords : undefined,
+    faqCount: Number.isFinite(faqCount) && faqCount > 0 ? faqCount : undefined,
+    internalLinkCount: Number.isFinite(internalLinkCount) && internalLinkCount > 0 ? internalLinkCount : undefined,
+    maxTokens: Number.isFinite(maxTokens) && maxTokens > 0 ? maxTokens : undefined,
+  };
+
   try {
     const { selection, selectionMode, queueSize } = await selectOpportunity(request);
 
-    const generated = await generateFromSelection(selection, {
-      minWords: Number.isFinite(minWords) && minWords > 0 ? minWords : undefined,
-      faqCount: Number.isFinite(faqCount) && faqCount > 0 ? faqCount : undefined,
-      internalLinkCount:
-        Number.isFinite(internalLinkCount) && internalLinkCount > 0
-          ? internalLinkCount
-          : undefined,
-      maxTokens: Number.isFinite(maxTokens) && maxTokens > 0 ? maxTokens : undefined,
-    });
+    // Fast preview: do not generate the article body.
+    if (previewOnly) {
+      return NextResponse.json(buildPreviewResponse(selection, selectionMode, queueSize, options));
+    }
 
-    const slug = clean(
-      generated?.slug || generated?.post?.slug || selection.key || slugifyFallback(selection.title)
-    );
+    const generated = await generateFromSelection(selection, options);
+
+    const slug = clean(generated?.slug || generated?.post?.slug || selection.key || slugifyFallback(selection.title));
     const title = clean(generated?.title || generated?.post?.title || selection.title);
     const type = clean(generated?.type || generated?.post?.type || selection.pageType || 'article');
     const wordCount = Number(generated?.wordCount || generated?.post?.wordCount || 0);
     const readingTime = Number(generated?.readingTime || generated?.post?.readingTime || 0);
-    const sourceCount = Number(
-      generated?.sourceCount ||
-        generated?.post?.sourceCount ||
-        generated?.research?.sourceCount ||
-        0
-    );
-    const evidenceScore = Number(
-      generated?.evidenceScore ||
-        generated?.post?.evidenceScore ||
-        generated?.research?.evidenceScore ||
-        0
-    );
+    const sourceCount = Number(generated?.sourceCount || generated?.post?.sourceCount || generated?.research?.sourceCount || 0);
+    const evidenceScore = Number(generated?.evidenceScore || generated?.post?.evidenceScore || generated?.research?.evidenceScore || 0);
 
-    let persistence = { saved: false, method: 'preview' };
-    if (!previewOnly) {
-      persistence = await persistGeneratedPost(generated?.post ?? generated);
-    }
+    const persistence = await persistGeneratedPost(generated?.post ?? generated);
 
     return NextResponse.json({
       success: true,
@@ -286,13 +293,14 @@ export async function GET(request: NextRequest) {
       saved: persistence.saved,
       saveMethod: persistence.method,
       url: slug ? `/blog/${slug}` : undefined,
-      previewOnly,
+      previewOnly: false,
+      generatorOptions: options,
       selection,
     });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message ?? 'Unknown auto-generate error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

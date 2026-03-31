@@ -4,52 +4,104 @@ import { BRAND_EDITOR, CURRENT_YEAR } from '@/lib/site';
 import { estimateReadingTime, makePairKey, slugify, stripHtml } from '@/lib/utils';
 import { runSearchQueries, type SearchQuery } from '@/lib/search-provider';
 
-const TOOL_LIST = tools as Tool[];
+const STATIC_TOOLS = tools as Tool[];
 const TODAY = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+type ToolLike = Tool & {
+  evidenceScore?: number;
+  sourceCount?: number;
+  research?: {
+    evidenceScore?: number;
+    sourceCount?: number;
+    provider?: string;
+    generatedAt?: string;
+    queries?: string[];
+    sources?: Array<{
+      title: string;
+      url: string;
+      domain: string;
+      snippet: string;
+      publishedAt?: string;
+      score?: number;
+      reason?: string;
+      kind?: string;
+    }>;
+    methodology?: string[];
+    freshness?: string;
+  };
+};
+
+export type Opportunity = {
+  key: string;
+  title: string;
+  pageType: string;
+  primaryKeyword?: string;
+  secondaryKeywords?: string[];
+  angle?: string;
+  toolSlugs?: string[];
+  score?: number;
+  clusterKey?: string;
+  clusterLabel?: string;
+};
+
 export type ContentDecision =
-  | { type: 'review'; tool: Tool }
-  | { type: 'comparison'; toolA: Tool; toolB: Tool }
-  | { type: 'roundup'; category: string; categoryLabel: string; tools: Tool[] }
-  | { type: 'pricing'; tool: Tool }
-  | { type: 'alternatives'; tool: Tool; alternatives: Tool[] }
-  | { type: 'guide'; tool: Tool; topic: string; keyword: string }
+  | { type: 'review'; tool: ToolLike }
+  | { type: 'comparison'; toolA: ToolLike; toolB: ToolLike }
+  | { type: 'roundup'; category: string; categoryLabel: string; tools: ToolLike[] }
+  | { type: 'pricing'; tool: ToolLike }
+  | { type: 'alternatives'; tool: ToolLike; alternatives: ToolLike[] }
+  | { type: 'guide'; tool: ToolLike; topic: string; keyword: string }
   | null;
 
-function sameCategoryTools(tool: Tool): Tool[] {
-  return TOOL_LIST
+async function loadAllTools(): Promise<ToolLike[]> {
+  try {
+    const mod: any = await import('@/lib/tools-storage');
+    if (typeof mod.getAllTools === 'function') {
+      const items = await mod.getAllTools();
+      if (Array.isArray(items) && items.length) return items as ToolLike[];
+    }
+  } catch {}
+
+  return STATIC_TOOLS as ToolLike[];
+}
+
+function sameCategoryTools(tool: ToolLike, allTools: ToolLike[]): ToolLike[] {
+  return allTools
     .filter((candidate) => candidate.category === tool.category && candidate.slug !== tool.slug)
-    .sort((a, b) => b.rating - a.rating || b.pricingValue - a.pricingValue);
+    .sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0) || Number(b.pricingValue ?? 0) - Number(a.pricingValue ?? 0));
 }
 
 export function selectNextContent(state: GenerationState): ContentDecision {
-  const reviewTarget = TOOL_LIST.find((tool) => !state.reviewedTools.includes(tool.slug));
-  if (reviewTarget) return { type: 'review', tool: reviewTarget };
+  const reviewTarget = STATIC_TOOLS.find((tool) => !state.reviewedTools.includes(tool.slug));
+  if (reviewTarget) return { type: 'review', tool: reviewTarget as ToolLike };
 
-  for (const tool of TOOL_LIST) {
-    if (!state.pricingDone.includes(tool.slug)) return { type: 'pricing', tool };
+  for (const tool of STATIC_TOOLS) {
+    if (!state.pricingDone.includes(tool.slug)) return { type: 'pricing', tool: tool as ToolLike };
   }
 
-  for (const tool of TOOL_LIST) {
-    const alternatives = sameCategoryTools(tool).slice(0, 4);
+  for (const tool of STATIC_TOOLS) {
+    const alternatives = STATIC_TOOLS
+      .filter((candidate) => candidate.category === tool.category && candidate.slug !== tool.slug)
+      .sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0))
+      .slice(0, 4) as ToolLike[];
     if (alternatives.length >= 2 && !state.guidesDone.includes(`${tool.slug}-alternatives`)) {
-      return { type: 'alternatives', tool, alternatives };
+      return { type: 'alternatives', tool: tool as ToolLike, alternatives };
     }
   }
 
-  for (const tool of TOOL_LIST) {
-    const candidate = sameCategoryTools(tool)[0];
+  for (const tool of STATIC_TOOLS) {
+    const candidate = STATIC_TOOLS.find((item) => item.category === tool.category && item.slug !== tool.slug) as ToolLike | undefined;
     if (!candidate) continue;
     const pairKey = makePairKey(tool.slug, candidate.slug);
     if (!state.comparedPairs.includes(pairKey)) {
-      return { type: 'comparison', toolA: tool, toolB: candidate };
+      return { type: 'comparison', toolA: tool as ToolLike, toolB: candidate };
     }
   }
 
-  const byCategory = new Map<string, Tool[]>();
-  for (const tool of TOOL_LIST) {
+  const byCategory = new Map<string, ToolLike[]>();
+  for (const tool of STATIC_TOOLS) {
     const bucket = byCategory.get(tool.category) ?? [];
-    bucket.push(tool);
+    bucket.push(tool as ToolLike);
     byCategory.set(tool.category, bucket);
   }
 
@@ -59,12 +111,12 @@ export function selectNextContent(state: GenerationState): ContentDecision {
         type: 'roundup',
         category,
         categoryLabel: items[0].categoryLabel,
-        tools: items.sort((a, b) => b.rating - a.rating).slice(0, 6),
+        tools: items.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0)).slice(0, 6),
       };
     }
   }
 
-  const guideTarget = TOOL_LIST[0];
+  const guideTarget = STATIC_TOOLS[0] as ToolLike;
   return {
     type: 'guide',
     tool: guideTarget,
@@ -79,9 +131,9 @@ export function generateSlug(decision: ContentDecision): string {
     case 'review':
       return `${decision.tool.slug}-review-${CURRENT_YEAR}`;
     case 'comparison':
-      return `${[decision.toolA.slug, decision.toolB.slug].sort().join('-vs-')}`;
+      return `${[decision.toolA.slug, decision.toolB.slug].sort().join('-vs-')}-${CURRENT_YEAR}`;
     case 'roundup':
-      return `best-${decision.category}-ai-tools-${CURRENT_YEAR}`;
+      return `best-${slugify(decision.categoryLabel)}-tools-${CURRENT_YEAR}`;
     case 'pricing':
       return `${decision.tool.slug}-pricing-${CURRENT_YEAR}`;
     case 'alternatives':
@@ -100,7 +152,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: `${decision.tool.name} review ${CURRENT_YEAR}`,
         title: `${decision.tool.name} Review ${CURRENT_YEAR}: Pricing, Strengths, Weaknesses, and Best Use Cases`,
         description: `Research-backed ${decision.tool.name} review with pricing, strengths, limitations, and best use cases for ${CURRENT_YEAR}.`,
-        type: 'review',
+        type: 'review' as ContentType,
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
       };
@@ -109,7 +161,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: `${decision.toolA.name} vs ${decision.toolB.name}`,
         title: `${decision.toolA.name} vs ${decision.toolB.name}: Which One Makes More Sense in ${CURRENT_YEAR}?`,
         description: `A research-backed comparison of ${decision.toolA.name} and ${decision.toolB.name}, including pricing, tradeoffs, and who each tool fits best.`,
-        type: 'comparison',
+        type: 'comparison' as ContentType,
         toolSlugs: [decision.toolA.slug, decision.toolB.slug],
         category: decision.toolA.category,
       };
@@ -118,7 +170,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: `best ${decision.categoryLabel.toLowerCase()} ai tools ${CURRENT_YEAR}`,
         title: `Best ${decision.categoryLabel} AI Tools in ${CURRENT_YEAR}: What Actually Stands Out`,
         description: `A researched roundup of the best ${decision.categoryLabel.toLowerCase()} AI tools in ${CURRENT_YEAR}, with fit, tradeoffs, and buying advice.`,
-        type: 'roundup',
+        type: 'roundup' as ContentType,
         toolSlugs: decision.tools.map((tool) => tool.slug),
         category: decision.category,
       };
@@ -127,7 +179,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: `${decision.tool.name} pricing ${CURRENT_YEAR}`,
         title: `${decision.tool.name} Pricing ${CURRENT_YEAR}: Plans, Costs, and Best Fit`,
         description: `A research-backed breakdown of ${decision.tool.name} pricing, plan differences, upgrade thresholds, and value for money in ${CURRENT_YEAR}.`,
-        type: 'pricing',
+        type: 'pricing' as ContentType,
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
       };
@@ -136,7 +188,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: `${decision.tool.name} alternatives ${CURRENT_YEAR}`,
         title: `Best ${decision.tool.name} Alternatives in ${CURRENT_YEAR}: Better Value, Better Fit, or Both?`,
         description: `Research-backed alternatives to ${decision.tool.name}, focused on price, fit, and the situations where switching makes sense.`,
-        type: 'alternatives',
+        type: 'guide' as ContentType,
         toolSlugs: [decision.tool.slug, ...decision.alternatives.map((tool) => tool.slug)],
         category: decision.tool.category,
       };
@@ -145,7 +197,7 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
         primaryKeyword: decision.keyword,
         title: decision.topic,
         description: `A practical guide to ${decision.topic} built from live research, official documentation, and product data.`,
-        type: 'guide',
+        type: 'guide' as ContentType,
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
       };
@@ -153,7 +205,11 @@ export function summarizeDecision(decision: ContentDecision): { primaryKeyword: 
 }
 
 function officialDomain(url: string): string {
-  return new URL(url).hostname.replace(/^www\./, '');
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
 }
 
 function dedupeSources(sources: ResearchBundle['sources']): ResearchBundle['sources'] {
@@ -171,8 +227,8 @@ function dedupeSources(sources: ResearchBundle['sources']): ResearchBundle['sour
 }
 
 function scoreEvidence(sources: ResearchBundle['sources'], mustIncludeDomain?: string): number {
-  const uniqueDomains = new Set(sources.map((source) => source.domain)).size;
-  const officialBonus = mustIncludeDomain && sources.some((source) => source.domain === mustIncludeDomain) ? 20 : 0;
+  const uniqueDomains = new Set(sources.map((source: any) => source.domain)).size;
+  const officialBonus = mustIncludeDomain && sources.some((source: any) => source.domain === mustIncludeDomain) ? 20 : 0;
   const sourceVolume = Math.min(40, sources.length * 5);
   const diversity = Math.min(20, uniqueDomains * 4);
   return Math.min(100, 20 + officialBonus + sourceVolume + diversity);
@@ -185,60 +241,61 @@ export async function buildResearchBundle(decision: ContentDecision): Promise<Re
   if (decision.type === 'review' || decision.type === 'pricing') {
     const domain = officialDomain(decision.tool.url);
     queries.push(
-      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: 'Verify current plans and official pricing details', includeDomains: [domain] },
-      { query: `${decision.tool.name} official documentation features ${CURRENT_YEAR}`, reason: 'Verify current product capabilities from official docs', includeDomains: [domain] },
-      { query: `${decision.tool.name} release notes changelog ${CURRENT_YEAR}`, reason: 'Check recent product changes and momentum' },
+      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: 'Verify current plans and official pricing details', includeDomains: domain ? [domain] : undefined },
+      { query: `${decision.tool.name} official documentation features ${CURRENT_YEAR}`, reason: 'Verify current product capabilities from official docs', includeDomains: domain ? [domain] : undefined },
+      { query: `${decision.tool.name} release notes changelog ${CURRENT_YEAR}`, reason: 'Check recent product changes and momentum', topic: 'news' },
       { query: `${decision.tool.name} reviews comparison ${CURRENT_YEAR}`, reason: 'Collect third-party commentary on tradeoffs and fit' },
     );
-  }
-
-  if (decision.type === 'comparison') {
+  } else if (decision.type === 'comparison') {
     queries.push(
       { query: `${decision.toolA.name} vs ${decision.toolB.name} ${CURRENT_YEAR}`, reason: 'Map head-to-head comparison intent and market framing' },
-      { query: `${decision.toolA.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolA.name}`, includeDomains: [officialDomain(decision.toolA.url)] },
-      { query: `${decision.toolB.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolB.name}`, includeDomains: [officialDomain(decision.toolB.url)] },
-      { query: `${decision.toolA.name} ${decision.toolB.name} release notes ${CURRENT_YEAR}`, reason: 'Check current feature momentum and positioning' },
+      { query: `${decision.toolA.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolA.name}`, includeDomains: [officialDomain(decision.toolA.url)].filter(Boolean) },
+      { query: `${decision.toolB.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.toolB.name}`, includeDomains: [officialDomain(decision.toolB.url)].filter(Boolean) },
+      { query: `${decision.toolA.name} ${decision.toolB.name} release notes ${CURRENT_YEAR}`, reason: 'Check current feature momentum and positioning', topic: 'news' },
     );
-  }
-
-  if (decision.type === 'roundup') {
+  } else if (decision.type === 'roundup') {
     queries.push(
       { query: `best ${decision.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Map current commercial intent and list framing' },
       { query: `${decision.categoryLabel} ai tools pricing ${CURRENT_YEAR}`, reason: 'Capture pricing and buying angles across the market' },
       { query: `${decision.categoryLabel} ai tools use cases ${CURRENT_YEAR}`, reason: 'Gather real jobs-to-be-done and decision criteria' },
       { query: `${decision.categoryLabel} ai tools for teams ${CURRENT_YEAR}`, reason: 'Find business-facing intent and team-buying signals' },
     );
-  }
-
-  if (decision.type === 'alternatives') {
+  } else if (decision.type === 'alternatives') {
+    const domain = officialDomain(decision.tool.url);
     queries.push(
-      { query: `${decision.tool.name} alternatives ${CURRENT_YEAR}`, reason: 'Map switching intent and replacement-style SERPs' },
-      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: `Verify official pricing for ${decision.tool.name}`, includeDomains: [officialDomain(decision.tool.url)] },
-      { query: `${decision.tool.categoryLabel} ai tools ${CURRENT_YEAR}`, reason: 'Find current substitutes and adjacent competitors with strong fit' },
-      { query: `${decision.tool.name} release notes ${CURRENT_YEAR}`, reason: 'Check what changed recently before recommending alternatives' },
+      { query: `${decision.tool.name} alternatives ${CURRENT_YEAR}`, reason: 'Map switch intent and substitute demand' },
+      { query: `${decision.tool.name} official pricing ${CURRENT_YEAR}`, reason: 'Verify official pricing for the anchor tool', includeDomains: domain ? [domain] : undefined },
+      { query: `${decision.tool.name} competitors comparison ${CURRENT_YEAR}`, reason: 'Find relevant replacement framing and tradeoffs' },
+      { query: `${decision.tool.name} release notes ${CURRENT_YEAR}`, reason: 'Check current product movement and momentum', topic: 'news' },
+    );
+  } else if (decision.type === 'guide') {
+    const domain = officialDomain(decision.tool.url);
+    queries.push(
+      { query: `${decision.tool.name} official docs tutorial ${CURRENT_YEAR}`, reason: 'Get official setup and workflow guidance', includeDomains: domain ? [domain] : undefined },
+      { query: `${decision.tool.name} use cases ${CURRENT_YEAR}`, reason: 'Gather practical workflow patterns' },
+      { query: `${decision.tool.name} release notes ${CURRENT_YEAR}`, reason: 'Check freshness of product capabilities', topic: 'news' },
     );
   }
 
-  if (decision.type === 'guide') {
-    queries.push(
-      { query: `${decision.topic} ${CURRENT_YEAR}`, reason: 'Gather live context for the workflow topic' },
-      { query: `${decision.tool.name} official documentation ${CURRENT_YEAR}`, reason: `Verify current ${decision.tool.name} capabilities`, includeDomains: [officialDomain(decision.tool.url)] },
-      { query: `${decision.tool.name} best practices ${CURRENT_YEAR}`, reason: 'Capture practical implementation details and pitfalls' },
-    );
-  }
+  const result: any = await runSearchQueries(queries);
+  const sources = dedupeSources((result?.sources ?? []).map((source: any, index: number) => ({
+    title: source.title,
+    url: source.url,
+    domain: officialDomain(source.url),
+    snippet: source.snippet,
+    publishedAt: source.publishedAt,
+    reason: queries[index % Math.max(1, queries.length)]?.reason ?? 'Supporting evidence',
+  })));
 
-  const result = await runSearchQueries(queries);
-  const sources = dedupeSources(result.sources).slice(0, 12);
-  const mustIncludeDomain =
-    decision?.type === 'review' || decision?.type === 'pricing' || decision?.type === 'alternatives' || decision?.type === 'guide'
-      ? officialDomain(decision.tool.url)
-      : decision?.type === 'comparison'
-        ? officialDomain(decision.toolA.url)
-        : undefined;
+  const mustIncludeDomain = decision?.type === 'review' || decision?.type === 'pricing' || decision?.type === 'alternatives' || decision?.type === 'guide'
+    ? officialDomain(decision.tool.url)
+    : decision?.type === 'comparison'
+      ? officialDomain(decision.toolA.url)
+      : undefined;
   const evidenceScore = scoreEvidence(sources, mustIncludeDomain);
 
   return {
-    provider: result.provider,
+    provider: result?.provider ?? 'unknown',
     generatedAt: new Date().toISOString(),
     queries: queries.map((query) => query.query),
     sources,
@@ -249,85 +306,45 @@ export async function buildResearchBundle(decision: ContentDecision): Promise<Re
       'Preference for official pricing pages, documentation, release notes, and high-trust market coverage',
       'Editorial synthesis based on sourced facts and structured product data',
     ],
-  };
+  } as ResearchBundle;
 }
 
 export function buildPrompt(decision: ContentDecision, research: ResearchBundle): string {
   const summary = summarizeDecision(decision);
-  const sourceList = research.sources
+  const sourceList = (research.sources ?? [])
     .slice(0, 12)
-    .map((source, index) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}\nReason: ${source.reason}\nSnippet: ${source.snippet}`)
+    .map((source: any, index: number) => `${index + 1}. ${source.title} | ${source.domain} | ${source.url}\nReason: ${source.reason ?? 'Supporting evidence'}\nSnippet: ${source.snippet}`)
     .join('\n\n');
 
-  const decisionContext = (() => {
-    if (!decision) return '';
-    switch (decision.type) {
-      case 'review':
-      case 'pricing':
-        return `Tool data:\n${JSON.stringify(decision.tool, null, 2)}`;
-      case 'comparison':
-        return `Tool A:\n${JSON.stringify(decision.toolA, null, 2)}\n\nTool B:\n${JSON.stringify(decision.toolB, null, 2)}`;
-      case 'roundup':
-        return `Roundup tools:\n${JSON.stringify(decision.tools, null, 2)}`;
-      case 'alternatives':
-        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nAlternatives:\n${JSON.stringify(decision.alternatives, null, 2)}`;
-      case 'guide':
-        return `Primary tool:\n${JSON.stringify(decision.tool, null, 2)}\n\nGuide topic: ${decision.topic}`;
-    }
-  })();
+  return `You are ${BRAND_EDITOR ?? 'ComparAITools Research Desk'}, writing a ${summary.type} article for a commercial AI tools site.
 
-  return `You are the editorial research desk for ${BRAND_EDITOR}. Write a genuinely useful, source-backed commercial article designed to rank because it helps buyers make a better software decision.
+Goal:
+- Write a genuinely useful, SEO-strong, human-readable article.
+- Use only supported facts from the research bundle and tool data.
+- Be explicit about tradeoffs.
+- No fake personal testing. No pretending you used the product unless evidence explicitly supports it.
+- Output clean HTML only for the article body. No markdown. No code fences.
 
-CURRENT DATE: ${TODAY}
-ARTICLE TYPE: ${summary.type}
-PRIMARY KEYWORD: ${summary.primaryKeyword}
-TITLE GOAL: ${summary.title}
-META DESCRIPTION GOAL: ${summary.description}
+Article brief:
+Title: ${summary.title}
+Primary keyword: ${summary.primaryKeyword}
+Secondary context: ${(summary.toolSlugs ?? []).join(', ')}
+Angle: ${'angle' in (decision as any) ? ((decision as any).angle ?? '') : ''}
+Date context: ${TODAY}
 
-MANDATORY RULES:
-- Do NOT claim personal use, hands-on testing, subscriptions, or fake experiments.
-- Do NOT write phrases like "I tested", "we tested", "our team found", or invent a founder persona.
-- Every factual claim about pricing, plans, releases, or availability must be grounded in the supplied live research sources or the structured tool data.
-- Add original value by explaining tradeoffs, fit, switching costs, onboarding friction, and decision criteria.
-- When evidence is incomplete, mixed, or outdated, say so plainly.
-- Keep the tone sharp, commercial, and human. No fluff, no AI clichés, no vague hype.
-- Mention the exact update date in the intro.
-- Output ONLY semantic HTML inside a single <article> element.
-- Include one <section id="quick-answer"> near the top with a direct recommendation.
-- Include one <section id="pricing-snapshot"> with a short table or bullet summary when pricing matters.
-- Include one <section id="who-should-buy"> and one <section id="who-should-skip">.
-- Include one <section id="switching-costs"> when another tool is relevant.
-- Include one <section id="methodology"> describing how the article was assembled from live research and product data.
-- Include one <section id="sources"> with an ordered list of 5-12 cited sources using the supplied titles and URLs.
-- In the sources section, each item must use a clickable <a href="...">source title</a>.
-- Include internal links where natural to /tools/[slug], /compare/[slugA-vs-slugB], /category/[category], and /blog.
-- Keep the article between 1,500 and 2,300 words.
-
-STRUCTURE TO FOLLOW:
-1. Intro with current context and what changed recently.
-2. Quick answer / verdict.
-3. Pricing or product snapshot.
-4. Best-fit scenarios.
-5. Who should buy / who should skip.
-6. Where the tool wins / loses.
-7. Alternatives or comparison angle.
-8. Practical buying advice.
-9. Methodology.
-10. Sources.
-
-WRITE FOR THESE OUTCOMES:
-- Satisfy the searcher without sounding generic.
-- Make at least three non-obvious buying points.
-- Explain why someone would regret the wrong choice.
-- Use short tables or bullet lists when it clarifies a decision.
-- Mention 2-3 specific facts from the supplied sources naturally in the article body.
-
-Use this decision context:
-${decisionContext}
-
-Use these live research sources:
+Research bundle:
 ${sourceList}
-`;
+
+Required structure:
+- Intro with buying intent context
+- Quick verdict / who it is for
+- Pricing / value section when relevant
+- Strengths and tradeoffs
+- Best alternatives or comparisons when relevant
+- Clear conclusion
+- FAQ section with 3 short FAQs
+
+Make the article complete enough to rank and satisfy search intent.`;
 }
 
 export function generateSEOMetadata(decision: ContentDecision, content: string): Pick<BlogPost, 'title' | 'metaTitle' | 'metaDescription' | 'primaryKeyword' | 'keywords' | 'excerpt' | 'wordCount' | 'readingTime' | 'schemaOrg'> {
@@ -350,4 +367,163 @@ export function generateSEOMetadata(decision: ContentDecision, content: string):
       description: summary.description,
     },
   };
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceToolNameInTitle(base: string, toolName: string): string {
+  return base.replace(/\b[A-Z][A-Za-z0-9+.-]*(?:\s[A-Z][A-Za-z0-9+.-]*)*\b/, toolName);
+}
+
+async function askAnthropicForHtml(prompt: string, maxTokens = 3200): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY missing');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      temperature: 0.2,
+      system: 'Return clean HTML only. No markdown. No outer code fences.',
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Anthropic error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.content?.find((part: any) => part.type === 'text')?.text ?? '';
+}
+
+async function buildDecisionFromOpportunity(opportunity: Opportunity): Promise<ContentDecision> {
+  const allTools = await loadAllTools();
+  const bySlug = new Map(allTools.map((tool) => [tool.slug, tool]));
+  const pageType = (opportunity.pageType || '').toLowerCase();
+  const toolSlugs = opportunity.toolSlugs ?? [];
+
+  if (pageType === 'pricing' || pageType === 'review') {
+    const tool = bySlug.get(toolSlugs[0] || '') ?? allTools.find((item) => item.slug === slugify(opportunity.title.split(' Pricing')[0] || opportunity.title.split(' Review')[0] || ''));
+    if (!tool) throw new Error(`Tool not found for ${pageType}: ${toolSlugs[0] || opportunity.title}`);
+    return pageType === 'pricing' ? { type: 'pricing', tool } : { type: 'review', tool };
+  }
+
+  if (pageType === 'alternatives') {
+    const tool = bySlug.get(toolSlugs[0] || '') ?? allTools.find((item) => item.slug === slugify(opportunity.title.replace(/^Best\s+/i, '').replace(/ Alternatives.*$/i, '')));
+    if (!tool) throw new Error(`Tool not found for alternatives: ${toolSlugs[0] || opportunity.title}`);
+    const alternatives = sameCategoryTools(tool, allTools).slice(0, 5);
+    return { type: 'alternatives', tool, alternatives };
+  }
+
+  if (pageType === 'comparison' || pageType === 'versus') {
+    const toolA = bySlug.get(toolSlugs[0] || '');
+    const toolB = bySlug.get(toolSlugs[1] || '');
+    if (!toolA || !toolB) throw new Error(`Tools not found for comparison: ${toolSlugs.join(', ')}`);
+    return { type: 'comparison', toolA, toolB };
+  }
+
+  if (pageType === 'best-for-role' || pageType === 'roundup' || pageType === 'free-tools') {
+    const category = opportunity.clusterKey?.replace(/^ai-/, '') || opportunity.pageType || 'productivity';
+    const tools = allTools.filter((tool) => tool.slug && (!toolSlugs.length || toolSlugs.includes(tool.slug) || tool.category.includes(category) || (tool.categoryLabel || '').toLowerCase().includes(category.replace(/-/g, ' '))));
+    const chosen = tools.length ? tools : allTools.slice(0, 5);
+    return {
+      type: 'roundup',
+      category: chosen[0]?.category ?? category,
+      categoryLabel: chosen[0]?.categoryLabel ?? opportunity.clusterLabel ?? 'AI tools',
+      tools: chosen.slice(0, 6),
+    };
+  }
+
+  if (pageType === 'workflow-guide' || pageType === 'guide') {
+    const tool = bySlug.get(toolSlugs[0] || '') ?? allTools.find((item) => item.slug === slugify(opportunity.title.replace(/^How to Use\s+/i, '').replace(/\s+to\s+.*$/i, '')));
+    if (!tool) throw new Error(`Tool not found for guide: ${toolSlugs[0] || opportunity.title}`);
+    return {
+      type: 'guide',
+      tool,
+      topic: opportunity.title,
+      keyword: opportunity.primaryKeyword || `how to use ${tool.name}`,
+    };
+  }
+
+  throw new Error(`Unsupported opportunity pageType=${opportunity.pageType}`);
+}
+
+function normalizeHtmlContent(html: string): string {
+  return String(html || '')
+    .replace(/```html/gi, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
+function deriveTitleFromOpportunity(opportunity: Opportunity, decision: ContentDecision): string {
+  const summary = summarizeDecision(decision);
+  return opportunity.title || summary.title;
+}
+
+export async function generatePostFromOpportunity(opportunity: Opportunity): Promise<any> {
+  const decision = await buildDecisionFromOpportunity(opportunity);
+  const research = await buildResearchBundle(decision);
+  const prompt = buildPrompt(decision, research);
+  const rawHtml = await askAnthropicForHtml(prompt, 3400);
+  const content = normalizeHtmlContent(rawHtml);
+  const seo = generateSEOMetadata(decision, content);
+  const summary = summarizeDecision(decision);
+  const title = deriveTitleFromOpportunity(opportunity, decision);
+  const slug = generateSlug(decision);
+
+  const post = {
+    slug,
+    title,
+    type: summary.type,
+    content,
+    publishedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    toolSlugs: summary.toolSlugs,
+    category: summary.category,
+    schemaOrg: {
+      ...seo.schemaOrg,
+      author: { '@type': 'Organization', name: BRAND_EDITOR ?? 'ComparAITools Research Desk' },
+      datePublished: new Date().toISOString(),
+      dateModified: new Date().toISOString(),
+      mainEntityOfPage: `/blog/${slug}`,
+    },
+    ...seo,
+    research,
+    evidenceScore: research.evidenceScore,
+    sourceCount: research.sources.length,
+    sourceUrls: research.sources.map((source: any) => source.url),
+  } satisfies Partial<BlogPost> & Record<string, any>;
+
+  return {
+    slug,
+    title,
+    type: summary.type,
+    wordCount: seo.wordCount,
+    readingTime: seo.readingTime,
+    sourceCount: research.sources.length,
+    evidenceScore: research.evidenceScore,
+    research,
+    post,
+  };
+}
+
+export async function generateContentFromOpportunity(opportunity: Opportunity): Promise<any> {
+  return generatePostFromOpportunity(opportunity);
+}
+
+export async function generatePost(opportunity: Opportunity): Promise<any> {
+  return generatePostFromOpportunity(opportunity);
+}
+
+export async function generateContent(opportunity: Opportunity): Promise<any> {
+  return generatePostFromOpportunity(opportunity);
 }

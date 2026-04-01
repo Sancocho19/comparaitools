@@ -213,12 +213,28 @@ export default async function HomePage() {
     }
   }
 
-  const featuredComparisons = comparisons
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
+  const featuredComparisons = comparisons.sort((a, b) => b.score - a.score).slice(0, 6);
 
   const highConfidenceCount = tools.filter((tool) => getEvidenceScore(tool) >= 75).length;
   const discoveredCount = tools.filter((tool) => tool.source === 'discovered').length;
+
+  const blogHighlights = [
+    {
+      title: 'Pricing deep dives',
+      description: 'Commercial pages built for users comparing plan costs, upgrade thresholds, and value for money.',
+      href: '/blog',
+    },
+    {
+      title: 'Alternatives that matter',
+      description: 'Sharper side-by-side alternatives and substitute pages aimed at real switching intent, not fluffy lists.',
+      href: '/blog',
+    },
+    {
+      title: 'Reviews and buying guides',
+      description: 'Cleaner review-style pages that explain fit, tradeoffs, and who should actually choose each tool.',
+      href: '/blog',
+    },
+  ];
 
   return (
     <>
@@ -236,10 +252,7 @@ export default async function HomePage() {
             >
               C
             </div>
-            <span
-              className="font-extrabold text-lg hidden sm:block"
-              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '-0.5px' }}
-            >
+            <span className="font-extrabold text-lg hidden sm:block" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '-0.5px' }}>
               <span className="text-[var(--accent)]">Compar</span>
               <span className="text-[var(--text)]">AITools</span>
             </span>
@@ -471,6 +484,37 @@ export default async function HomePage() {
             </div>
           </section>
         ) : null}
+
+        <section className="mb-20 md:mb-24">
+          <SectionHeader
+            eyebrow="From the blog"
+            title="Entry points into the content side of the site"
+            subtitle="Use the blog as the softer layer of the funnel: pricing pages, alternatives, reviews, and buying guides."
+            linkHref="/blog"
+            linkLabel="Open the blog →"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            {blogHighlights.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="rounded-[24px] p-5 md:p-6 transition-all hover:-translate-y-0.5"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
+              >
+                <div
+                  className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold mb-4"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--purple)' }}
+                >
+                  BLOG
+                </div>
+                <h3 className="text-[var(--text)] text-lg font-bold mb-3">{item.title}</h3>
+                <p className="text-[var(--text-muted)] text-sm leading-7">{item.description}</p>
+                <div className="mt-5 text-[var(--accent)] text-sm font-semibold">Read more →</div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section>
           <SectionHeader

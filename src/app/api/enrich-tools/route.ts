@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bootstrapStaticTools, getAllTools, saveTool } from '@/lib/tools-storage';
 import { runSearchQueries } from '@/lib/search-provider';
 import type { SearchQuery } from '@/lib/search-provider';
-import { buildResearchRecord } from '@/lib/tool-discovery';
 import { buildResearchRecord, shouldAutoApprove } from '@/lib/tool-discovery';
 
 

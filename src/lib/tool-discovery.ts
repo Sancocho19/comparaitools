@@ -47,6 +47,8 @@ const CATEGORY_MAP: Record<string, { category: string; categoryLabel: string; lo
   video: { category: 'video', categoryLabel: 'AI video tools', logo: '🎬', color: '#f97316' },
   audio: { category: 'audio', categoryLabel: 'AI audio tools', logo: '🎧', color: '#ec4899' },
   productivity: { category: 'productivity', categoryLabel: 'AI productivity tools', logo: '⚡', color: '#f59e0b' },
+  'writing-marketing': { category: 'writing-marketing', categoryLabel: 'Writing & Marketing', logo: '✍️', color: '#22c55e' },
+  design: { category: 'design', categoryLabel: 'Design', logo: '🎯', color: '#8b5cf6' },
 };
 
 function cleanText(input: unknown): string {
@@ -112,6 +114,8 @@ function normalizeCategory(raw: string): { category: string; categoryLabel: stri
   const key = cleanText(raw).toLowerCase();
   if (CATEGORY_MAP[key]) return CATEGORY_MAP[key];
 
+  if (/(writing|copy|marketing|seo|content)/.test(key)) return CATEGORY_MAP['writing-marketing'];
+  if (/(design|ui|ux|mockup|prototype)/.test(key)) return CATEGORY_MAP.design;
   if (/(chat|assistant|llm)/.test(key)) return CATEGORY_MAP.chatbot;
   if (/(image|design|art)/.test(key)) return CATEGORY_MAP.image;
   if (/(code|dev|coding)/.test(key)) return CATEGORY_MAP.code;
@@ -188,7 +192,7 @@ Rules:
 - DO NOT include duplicates of these existing slugs: ${existingSlugs.join(', ')}.
 - Skip tools that are obviously just features inside a bigger product unless marketed as their own product.
 - Prefer tools with clear commercial intent, active launches, pricing pages, docs, or strong growth signals.
-- category must be one of: chatbot, image, code, search, video, audio, productivity.
+- category must be one of: chatbot, image, code, search, video, audio, productivity, writing-marketing, design.
 - categoryLabel should be human-friendly.
 - sourceUrls should reference evidence from the snippets when possible.
 - If uncertain, leave the candidate out.
@@ -313,8 +317,18 @@ export function shouldAutoApprove(toolLike: any): boolean {
   const research = toolLike?.research;
   return Boolean(
     toolLike?.url &&
-    research?.evidenceScore >= 78 &&
+    research?.evidenceScore >= 82 &&
     research?.officialSourceCount >= 2 &&
-    research?.sourceCount >= 5
+    research?.sourceCount >= 6 &&
+    typeof toolLike?.description === 'string' &&
+    toolLike.description.trim().length >= 20 &&
+    typeof toolLike?.bestFor === 'string' &&
+    toolLike.bestFor.trim().length >= 10 &&
+    Array.isArray(toolLike?.features) &&
+    toolLike.features.length >= 4 &&
+    Array.isArray(toolLike?.pros) &&
+    toolLike.pros.length >= 3 &&
+    Array.isArray(toolLike?.cons) &&
+    toolLike.cons.length >= 2
   );
 }

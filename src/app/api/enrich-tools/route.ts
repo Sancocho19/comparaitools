@@ -63,13 +63,24 @@ async function askAnthropicForObject(prompt: string, maxTokens = 1800): Promise<
 
 function needsEnrichment(tool: any): boolean {
   const researchScore = Number(tool?.evidenceScore ?? tool?.research?.evidenceScore ?? 0);
+
+  const weakPricing =
+    !tool?.pricing ||
+    /check official/i.test(String(tool.pricing)) ||
+    String(tool.pricing).trim().length < 8;
+
   return (
     !tool?.description ||
     !tool?.longDescription ||
     !tool?.bestFor ||
     !Array.isArray(tool?.features) ||
-    tool.features.length < 3 ||
-    researchScore < 70
+    tool.features.length < 4 ||
+    !Array.isArray(tool?.pros) ||
+    tool.pros.length < 3 ||
+    !Array.isArray(tool?.cons) ||
+    tool.cons.length < 2 ||
+    weakPricing ||
+    researchScore < 75
   );
 }
 

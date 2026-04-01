@@ -3,6 +3,8 @@ import { bootstrapStaticTools, getAllTools, saveTool } from '@/lib/tools-storage
 import { runSearchQueries } from '@/lib/search-provider';
 import type { SearchQuery } from '@/lib/search-provider';
 import { buildResearchRecord } from '@/lib/tool-discovery';
+import { buildResearchRecord, shouldAutoApprove } from '@/lib/tool-discovery';
+
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -172,7 +174,7 @@ ${evidenceBundle}`;
           research,
         };
 
-        if (autoPublish && research.evidenceScore >= 78 && research.officialSourceCount >= 2) {
+        if (autoPublish && shouldAutoApprove(updatedTool)) {
           updatedTool.verified = true;
           updatedTool.status = 'published';
         }

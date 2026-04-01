@@ -43,12 +43,16 @@ function getSourceCount(tool: ToolItem): number {
 function compactPricing(value: string): string {
   const text = String(value || '').trim();
   if (!text) return 'Pricing not listed';
-  if (text.length <= 28) return text;
-  const short = text
+  if (text.length <= 26) return text;
+
+  const shortened = text
     .replace(/^free tier\s*\+\s*/i, 'Free + ')
     .replace(/^plans start at\s*/i, 'From ')
-    .replace(/^starting from\s*/i, 'From ');
-  return short.length <= 28 ? short : `${short.slice(0, 25).trim()}…`;
+    .replace(/^starting from\s*/i, 'From ')
+    .replace(/^free self-hosted version available\.\s*/i, '')
+    .replace(/^cloud plans start at\s*/i, 'Cloud from ');
+
+  return shortened.length <= 26 ? shortened : `${shortened.slice(0, 23).trim()}…`;
 }
 
 function pairScore(a: ToolItem, b: ToolItem): number {
@@ -73,93 +77,106 @@ function PairCard({
   return (
     <Link
       href={href}
-      className="group rounded-2xl p-4 transition-all hover:scale-[1.01]"
+      className="group rounded-[24px] p-5 md:p-6 transition-all duration-200 hover:-translate-y-0.5"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
     >
-      <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl shrink-0">{toolA.logo}</span>
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-4 md:gap-5 items-center">
+        <div className="min-w-0">
+          <div className="flex items-start gap-3 min-w-0">
+            <span className="text-2xl shrink-0 leading-none mt-0.5">{toolA.logo}</span>
             <div className="min-w-0">
-              <p className="text-[14px] font-bold text-[var(--text)] leading-tight truncate">{toolA.name}</p>
-              <p className="text-[10px] text-[var(--text-dim)] truncate">{toolA.categoryLabel}</p>
+              <p className="text-[15px] md:text-base font-bold text-[var(--text)] leading-snug truncate">
+                {toolA.name}
+              </p>
+              <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+                {toolA.categoryLabel}
+              </p>
             </div>
           </div>
 
-          {variant === 'featured' ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+            >
+              ★ {toolA.rating.toFixed(1)}
+            </span>
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              title={toolA.pricing}
+            >
+              {compactPricing(toolA.pricing)}
+            </span>
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
+            >
+              Evidence {getEvidenceScore(toolA)}
+            </span>
+            {variant === 'featured' ? (
               <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
               >
-                ★ {toolA.rating.toFixed(1)}
+                {getSourceCount(toolA) || '—'} sources
               </span>
-              <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold truncate max-w-[150px]"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-                title={toolA.pricing}
-              >
-                {compactPricing(toolA.pricing)}
-              </span>
-              <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
-                style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
-              >
-                Evidence {getEvidenceScore(toolA)}
-              </span>
-            </div>
-          ) : (
-            <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--text-dim)]">
-              <span>Evidence {getEvidenceScore(toolA)}</span>
-              <span>•</span>
-              <span className="truncate">{compactPricing(toolA.pricing)}</span>
-            </div>
-          )}
+            ) : null}
+          </div>
         </div>
 
-        <div className="shrink-0 flex flex-col items-center gap-1 px-1">
-          <span className="text-[11px] font-bold text-[var(--text-dim)]">VS</span>
-          <span className="text-[var(--accent)] text-sm group-hover:translate-x-1 transition-transform">→</span>
+        <div className="shrink-0 flex flex-col items-center justify-center gap-2 px-1 md:px-2">
+          <span
+            className="px-2.5 py-1 rounded-full text-[11px] font-bold"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
+          >
+            VS
+          </span>
+          <span className="text-[var(--accent)] text-base group-hover:translate-x-0.5 transition-transform">→</span>
         </div>
 
-        <div className="min-w-0 flex-1 text-right">
-          <div className="flex items-center justify-end gap-2 min-w-0">
+        <div className="min-w-0 text-right">
+          <div className="flex items-start justify-end gap-3 min-w-0">
             <div className="min-w-0">
-              <p className="text-[14px] font-bold text-[var(--text)] leading-tight truncate">{toolB.name}</p>
-              <p className="text-[10px] text-[var(--text-dim)] truncate">{toolB.categoryLabel}</p>
+              <p className="text-[15px] md:text-base font-bold text-[var(--text)] leading-snug truncate">
+                {toolB.name}
+              </p>
+              <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+                {toolB.categoryLabel}
+              </p>
             </div>
-            <span className="text-xl shrink-0">{toolB.logo}</span>
+            <span className="text-2xl shrink-0 leading-none mt-0.5">{toolB.logo}</span>
           </div>
 
-          {variant === 'featured' ? (
-            <div className="mt-3 flex flex-wrap gap-1.5 justify-end">
+          <div className="mt-4 flex flex-wrap gap-2 justify-end">
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+            >
+              ★ {toolB.rating.toFixed(1)}
+            </span>
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              title={toolB.pricing}
+            >
+              {compactPricing(toolB.pricing)}
+            </span>
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
+            >
+              Evidence {getEvidenceScore(toolB)}
+            </span>
+            {variant === 'featured' ? (
               <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
               >
-                ★ {toolB.rating.toFixed(1)}
+                {getSourceCount(toolB) || '—'} sources
               </span>
-              <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold truncate max-w-[150px]"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-                title={toolB.pricing}
-              >
-                {compactPricing(toolB.pricing)}
-              </span>
-              <span
-                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
-                style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
-              >
-                Evidence {getEvidenceScore(toolB)}
-              </span>
-            </div>
-          ) : (
-            <div className="mt-3 flex items-center justify-end gap-2 text-[11px] text-[var(--text-dim)]">
-              <span className="truncate">{compactPricing(toolB.pricing)}</span>
-              <span>•</span>
-              <span>Evidence {getEvidenceScore(toolB)}</span>
-            </div>
-          )}
+            ) : null}
+          </div>
         </div>
       </div>
     </Link>
@@ -210,7 +227,7 @@ export default async function ComparePage() {
         className="sticky top-0 z-50 backdrop-blur-xl"
         style={{ background: 'rgba(10,10,15,0.92)', borderBottom: '1px solid var(--border)' }}
       >
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3.5 flex items-center gap-4">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-7 py-3.5 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
@@ -240,127 +257,142 @@ export default async function ComparePage() {
             </Link>
           </div>
         </div>
-        <div className="md:hidden px-4 pb-3">
+        <div className="md:hidden px-5 pb-3">
           <SearchBar />
         </div>
       </nav>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-12 relative z-10">
-        <div className="text-center mb-12">
-          <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] justify-center mb-4">
-            <Link href="/" className="hover:text-[var(--accent)]">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-[var(--text-muted)]">Compare</span>
+      <main className="max-w-[1280px] mx-auto px-5 sm:px-7 py-14 md:py-16 relative z-10">
+        <section className="mb-14 md:mb-16">
+          <div className="text-center max-w-[820px] mx-auto">
+            <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] justify-center mb-5">
+              <Link href="/" className="hover:text-[var(--accent)]">
+                Home
+              </Link>
+              <span>/</span>
+              <span className="text-[var(--text-muted)]">Compare</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4" style={{ fontFamily: 'var(--font-mono)' }}>
+              <span className="text-[var(--text)]">Compare </span>
+              <span className="text-[var(--accent)]">AI Tools</span>
+            </h1>
+
+            <p className="text-[15px] md:text-base text-[var(--text-muted)] leading-8">
+              Focus on head-to-head decisions that actually matter: same-category rivals, pricing clarity, research strength, and stronger workflow fit.
+            </p>
           </div>
+        </section>
 
-          <h1 className="text-4xl font-extrabold mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-            <span className="text-[var(--text)]">Compare </span>
-            <span className="text-[var(--accent)]">AI Tools</span>
-          </h1>
-
-          <p className="text-[15px] text-[var(--text-muted)] max-w-2xl mx-auto leading-7">
-            Focus on head-to-head decisions that actually matter: same-category rivals, pricing clarity, and stronger workflow fit.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          {[
-            { label: 'Tools tracked', value: allTools.length },
-            { label: 'Same-category pairs', value: sameCategory.length },
-            { label: 'Cross-category pairs', value: crossCategory.length },
-            { label: 'Featured now', value: featuredPairs.length },
-          ].map((item) => (
-            <div key={item.label} className="text-center p-5 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-              <div className="text-2xl font-extrabold text-[var(--accent)] mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-                {item.value}
+        <section className="mb-14 md:mb-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            {[
+              { label: 'Tools tracked', value: allTools.length },
+              { label: 'Same-category pairs', value: sameCategory.length },
+              { label: 'Cross-category pairs', value: crossCategory.length },
+              { label: 'Featured now', value: featuredPairs.length },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="text-center rounded-[24px] px-5 py-6 md:px-6 md:py-7"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+              >
+                <div className="text-2xl md:text-3xl font-extrabold text-[var(--accent)] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {item.value}
+                </div>
+                <div className="text-[12px] text-[var(--text-dim)]">{item.label}</div>
               </div>
-              <div className="text-[12px] text-[var(--text-dim)]">{item.label}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        <section className="mb-12">
-          <div className="flex items-end justify-between gap-4 mb-5 flex-wrap">
-            <div>
-              <span className="text-[11px] tracking-[3px] text-[var(--accent)] font-bold uppercase block" style={{ fontFamily: 'var(--font-mono)' }}>
-                Highest intent
-              </span>
-              <h2 className="text-lg sm:text-xl font-bold text-[var(--text)] mt-2">Featured same-category comparisons</h2>
-            </div>
+        <section className="mb-16 md:mb-20">
+          <div className="mb-6 md:mb-7">
+            <span className="text-[11px] tracking-[3px] text-[var(--accent)] font-bold uppercase block" style={{ fontFamily: 'var(--font-mono)' }}>
+              Highest intent
+            </span>
+            <h2 className="text-xl md:text-2xl font-bold text-[var(--text)] mt-3">Featured same-category comparisons</h2>
+            <p className="text-[13px] md:text-sm text-[var(--text-muted)] mt-2 max-w-[760px] leading-7">
+              These are the cleaner comparison pages to push internally and from the blog because the buyer intent is much stronger.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5">
             {featuredPairs.map(({ toolA, toolB }) => (
               <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} variant="featured" />
             ))}
           </div>
         </section>
 
-        {categories.map(({ category, label }) => {
-          const pairs = sameCategory.filter((pair) => pair.toolA.category === category).slice(0, 6);
-          if (!pairs.length) return null;
+        <div className="space-y-16 md:space-y-20">
+          {categories.map(({ category, label }) => {
+            const pairs = sameCategory.filter((pair) => pair.toolA.category === category).slice(0, 6);
+            if (!pairs.length) return null;
 
-          return (
-            <section key={category} className="mb-12">
-              <h2 className="text-lg font-bold text-[var(--text)] mb-5 flex items-center gap-3">
-                <span>{pairs[0]?.toolA.logo}</span>
-                <span>{label} comparisons</span>
-                <span
-                  className="text-[12px] font-normal text-[var(--text-dim)] px-2 py-0.5 rounded-lg"
-                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-                >
-                  {pairs.length} featured
-                </span>
-              </h2>
+            return (
+              <section key={category}>
+                <div className="mb-6 md:mb-7 flex items-center gap-3 flex-wrap">
+                  <span className="text-xl">{pairs[0]?.toolA.logo}</span>
+                  <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">{label} comparisons</h2>
+                  <span
+                    className="text-[12px] font-normal text-[var(--text-dim)] px-2.5 py-1 rounded-lg"
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                  >
+                    {pairs.length} featured
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {pairs.map(({ toolA, toolB }) => (
-                  <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                  {pairs.map(({ toolA, toolB }) => (
+                    <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
 
-        <section className="mb-12">
-          <h2 className="text-lg font-bold text-[var(--text)] mb-2">Cross-category comparisons</h2>
-          <p className="text-[13px] text-[var(--text-muted)] mb-5">
-            Useful for exploration, but usually weaker buying pages than same-category matchups.
-          </p>
+        <section className="mt-16 md:mt-20 mb-16 md:mb-20">
+          <div className="mb-6 md:mb-7">
+            <h2 className="text-xl md:text-2xl font-bold text-[var(--text)] mb-2">Cross-category comparisons</h2>
+            <p className="text-[13px] md:text-sm text-[var(--text-muted)] max-w-[760px] leading-7">
+              Useful for exploration, but usually weaker buying pages than same-category matchups. Keep these cleaner and secondary.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
             {crossCategory.slice(0, 6).map(({ toolA, toolB }) => (
               <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
             ))}
           </div>
         </section>
 
-        <div className="text-center p-10 rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))' }}>
-          <h2 className="text-2xl font-extrabold mb-2" style={{ color: 'var(--bg)' }}>
-            Need the underlying tool profiles?
-          </h2>
-          <p className="text-sm mb-6 opacity-85" style={{ color: 'var(--bg)' }}>
-            Browse research-backed tool profiles before you jump into a comparison.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <Link
-              href="/tools"
-              className="px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
-              style={{ background: 'var(--bg)', color: 'var(--accent)', textDecoration: 'none' }}
-            >
-              Browse All Tools →
-            </Link>
-            <Link
-              href="/blog"
-              className="px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
-              style={{ background: 'rgba(0,0,0,0.2)', color: 'var(--bg)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}
-            >
-              Read the Blog →
-            </Link>
+        <section>
+          <div className="text-center rounded-[28px] px-6 py-10 md:px-10 md:py-12" style={{ background: 'linear-gradient(135deg, var(--accent), var(--purple))' }}>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-3" style={{ color: 'var(--bg)' }}>
+              Need the underlying tool profiles?
+            </h2>
+            <p className="text-sm md:text-base mb-7 opacity-90 max-w-[700px] mx-auto leading-7" style={{ color: 'var(--bg)' }}>
+              Browse the research-backed tool profiles before you jump into a comparison page.
+            </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link
+                href="/tools"
+                className="px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+                style={{ background: 'var(--bg)', color: 'var(--accent)', textDecoration: 'none' }}
+              >
+                Browse All Tools →
+              </Link>
+              <Link
+                href="/blog"
+                className="px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+                style={{ background: 'rgba(0,0,0,0.2)', color: 'var(--bg)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}
+              >
+                Read the Blog →
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </>
   );

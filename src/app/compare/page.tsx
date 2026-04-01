@@ -43,7 +43,7 @@ function getSourceCount(tool: ToolItem): number {
 function compactPricing(value: string): string {
   const text = String(value || '').trim();
   if (!text) return 'Pricing not listed';
-  if (text.length <= 26) return text;
+  if (text.length <= 24) return text;
 
   const shortened = text
     .replace(/^free tier\s*\+\s*/i, 'Free + ')
@@ -52,7 +52,7 @@ function compactPricing(value: string): string {
     .replace(/^free self-hosted version available\.\s*/i, '')
     .replace(/^cloud plans start at\s*/i, 'Cloud from ');
 
-  return shortened.length <= 26 ? shortened : `${shortened.slice(0, 23).trim()}…`;
+  return shortened.length <= 24 ? shortened : `${shortened.slice(0, 21).trim()}…`;
 }
 
 function pairScore(a: ToolItem, b: ToolItem): number {
@@ -77,10 +77,10 @@ function PairCard({
   return (
     <Link
       href={href}
-      className="group rounded-[24px] p-5 md:p-6 transition-all duration-200 hover:-translate-y-0.5"
+      className="group rounded-[26px] px-5 py-5 md:px-6 md:py-6 transition-all duration-200 hover:-translate-y-0.5"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-4 md:gap-5 items-center">
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-center">
         <div className="min-w-0">
           <div className="flex items-start gap-3 min-w-0">
             <span className="text-2xl shrink-0 leading-none mt-0.5">{toolA.logo}</span>
@@ -88,13 +88,13 @@ function PairCard({
               <p className="text-[15px] md:text-base font-bold text-[var(--text)] leading-snug truncate">
                 {toolA.name}
               </p>
-              <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+              <p className="text-[11px] text-[var(--text-dim)] truncate mt-1.5">
                 {toolA.categoryLabel}
               </p>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
             <span
               className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
@@ -125,7 +125,7 @@ function PairCard({
           </div>
         </div>
 
-        <div className="shrink-0 flex flex-col items-center justify-center gap-2 px-1 md:px-2">
+        <div className="shrink-0 flex flex-col items-center justify-center gap-2 px-1 md:px-3">
           <span
             className="px-2.5 py-1 rounded-full text-[11px] font-bold"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
@@ -141,14 +141,14 @@ function PairCard({
               <p className="text-[15px] md:text-base font-bold text-[var(--text)] leading-snug truncate">
                 {toolB.name}
               </p>
-              <p className="text-[11px] text-[var(--text-dim)] truncate mt-0.5">
+              <p className="text-[11px] text-[var(--text-dim)] truncate mt-1.5">
                 {toolB.categoryLabel}
               </p>
             </div>
             <span className="text-2xl shrink-0 leading-none mt-0.5">{toolB.logo}</span>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 justify-end">
+          <div className="mt-5 flex flex-wrap gap-2 justify-end">
             <span
               className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
@@ -180,6 +180,41 @@ function PairCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  badge,
+}: {
+  icon?: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+}) {
+  return (
+    <div className="mb-9 md:mb-11">
+      <div className="flex items-center gap-3 flex-wrap">
+        {icon ? <span className="text-xl">{icon}</span> : null}
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">{title}</h2>
+        {badge ? (
+          <span
+            className="text-[12px] font-normal text-[var(--text-dim)] px-2.5 py-1 rounded-lg"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          >
+            {badge}
+          </span>
+        ) : null}
+      </div>
+
+      {subtitle ? (
+        <p className="text-[13px] md:text-sm text-[var(--text-muted)] max-w-[780px] leading-7 mt-4">
+          {subtitle}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -263,7 +298,7 @@ export default async function ComparePage() {
       </nav>
 
       <main className="max-w-[1280px] mx-auto px-5 sm:px-7 py-14 md:py-16 relative z-10">
-        <section className="mb-14 md:mb-16">
+        <section className="mb-16 md:mb-20">
           <div className="text-center max-w-[820px] mx-auto">
             <div className="flex items-center gap-2 text-xs text-[var(--text-dim)] justify-center mb-5">
               <Link href="/" className="hover:text-[var(--accent)]">
@@ -284,7 +319,7 @@ export default async function ComparePage() {
           </div>
         </section>
 
-        <section className="mb-14 md:mb-16">
+        <section className="mb-16 md:mb-20">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
             {[
               { label: 'Tools tracked', value: allTools.length },
@@ -306,43 +341,33 @@ export default async function ComparePage() {
           </div>
         </section>
 
-        <section className="mb-16 md:mb-20">
-          <div className="mb-6 md:mb-7">
-            <span className="text-[11px] tracking-[3px] text-[var(--accent)] font-bold uppercase block" style={{ fontFamily: 'var(--font-mono)' }}>
-              Highest intent
-            </span>
-            <h2 className="text-xl md:text-2xl font-bold text-[var(--text)] mt-3">Featured same-category comparisons</h2>
-            <p className="text-[13px] md:text-sm text-[var(--text-muted)] mt-2 max-w-[760px] leading-7">
-              These are the cleaner comparison pages to push internally and from the blog because the buyer intent is much stronger.
-            </p>
-          </div>
+        <section className="mb-20 md:mb-24">
+          <SectionHeader
+            title="Featured same-category comparisons"
+            subtitle="These are the cleaner comparison pages to push internally and from the blog because the buyer intent is much stronger."
+          />
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">
             {featuredPairs.map(({ toolA, toolB }) => (
               <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} variant="featured" />
             ))}
           </div>
         </section>
 
-        <div className="space-y-16 md:space-y-20">
+        <div className="space-y-20 md:space-y-24">
           {categories.map(({ category, label }) => {
             const pairs = sameCategory.filter((pair) => pair.toolA.category === category).slice(0, 6);
             if (!pairs.length) return null;
 
             return (
               <section key={category}>
-                <div className="mb-6 md:mb-7 flex items-center gap-3 flex-wrap">
-                  <span className="text-xl">{pairs[0]?.toolA.logo}</span>
-                  <h2 className="text-xl md:text-2xl font-bold text-[var(--text)]">{label} comparisons</h2>
-                  <span
-                    className="text-[12px] font-normal text-[var(--text-dim)] px-2.5 py-1 rounded-lg"
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-                  >
-                    {pairs.length} featured
-                  </span>
-                </div>
+                <SectionHeader
+                  icon={pairs[0]?.toolA.logo}
+                  title={`${label} comparisons`}
+                  badge={`${pairs.length} featured`}
+                />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
                   {pairs.map(({ toolA, toolB }) => (
                     <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
                   ))}
@@ -352,15 +377,13 @@ export default async function ComparePage() {
           })}
         </div>
 
-        <section className="mt-16 md:mt-20 mb-16 md:mb-20">
-          <div className="mb-6 md:mb-7">
-            <h2 className="text-xl md:text-2xl font-bold text-[var(--text)] mb-2">Cross-category comparisons</h2>
-            <p className="text-[13px] md:text-sm text-[var(--text-muted)] max-w-[760px] leading-7">
-              Useful for exploration, but usually weaker buying pages than same-category matchups. Keep these cleaner and secondary.
-            </p>
-          </div>
+        <section className="mt-20 md:mt-24 mb-20 md:mb-24">
+          <SectionHeader
+            title="Cross-category comparisons"
+            subtitle="Useful for exploration, but usually weaker buying pages than same-category matchups. Keep these cleaner and secondary."
+          />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
             {crossCategory.slice(0, 6).map(({ toolA, toolB }) => (
               <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
             ))}

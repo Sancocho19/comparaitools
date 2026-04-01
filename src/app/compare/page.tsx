@@ -40,37 +40,151 @@ function getSourceCount(tool: ToolItem): number {
   return Number(typed.sourceCount ?? typed.research?.sourceCount ?? 0);
 }
 
+function compactPricing(value: string): string {
+  const text = String(value || '').trim();
+  if (!text) return 'Pricing not listed';
+  if (text.length <= 28) return text;
+  const short = text
+    .replace(/^free tier\s*\+\s*/i, 'Free + ')
+    .replace(/^plans start at\s*/i, 'From ')
+    .replace(/^starting from\s*/i, 'From ');
+  return short.length <= 28 ? short : `${short.slice(0, 25).trim()}…`;
+}
+
+function pairScore(a: ToolItem, b: ToolItem): number {
+  const sameCategoryBonus = a.category === b.category ? 24 : 0;
+  const research = getEvidenceScore(a) + getEvidenceScore(b);
+  const ratings = Math.round(a.rating * 10) + Math.round(b.rating * 10);
+  const sources = getSourceCount(a) + getSourceCount(b);
+  return sameCategoryBonus + research + ratings + sources;
+}
+
+function PairCard({
+  toolA,
+  toolB,
+  variant = 'compact',
+}: {
+  toolA: ToolItem;
+  toolB: ToolItem;
+  variant?: 'compact' | 'featured';
+}) {
+  const href = `/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`;
+
+  return (
+    <Link
+      href={href}
+      className="group rounded-2xl p-4 transition-all hover:scale-[1.01]"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl shrink-0">{toolA.logo}</span>
+            <div className="min-w-0">
+              <p className="text-[14px] font-bold text-[var(--text)] leading-tight truncate">{toolA.name}</p>
+              <p className="text-[10px] text-[var(--text-dim)] truncate">{toolA.categoryLabel}</p>
+            </div>
+          </div>
+
+          {variant === 'featured' ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              >
+                ★ {toolA.rating.toFixed(1)}
+              </span>
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold truncate max-w-[150px]"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                title={toolA.pricing}
+              >
+                {compactPricing(toolA.pricing)}
+              </span>
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
+              >
+                Evidence {getEvidenceScore(toolA)}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--text-dim)]">
+              <span>Evidence {getEvidenceScore(toolA)}</span>
+              <span>•</span>
+              <span className="truncate">{compactPricing(toolA.pricing)}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="shrink-0 flex flex-col items-center gap-1 px-1">
+          <span className="text-[11px] font-bold text-[var(--text-dim)]">VS</span>
+          <span className="text-[var(--accent)] text-sm group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+
+        <div className="min-w-0 flex-1 text-right">
+          <div className="flex items-center justify-end gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-[14px] font-bold text-[var(--text)] leading-tight truncate">{toolB.name}</p>
+              <p className="text-[10px] text-[var(--text-dim)] truncate">{toolB.categoryLabel}</p>
+            </div>
+            <span className="text-xl shrink-0">{toolB.logo}</span>
+          </div>
+
+          {variant === 'featured' ? (
+            <div className="mt-3 flex flex-wrap gap-1.5 justify-end">
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              >
+                ★ {toolB.rating.toFixed(1)}
+              </span>
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold truncate max-w-[150px]"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                title={toolB.pricing}
+              >
+                {compactPricing(toolB.pricing)}
+              </span>
+              <span
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold"
+                style={{ background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)', color: 'var(--accent)' }}
+              >
+                Evidence {getEvidenceScore(toolB)}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-3 flex items-center justify-end gap-2 text-[11px] text-[var(--text-dim)]">
+              <span className="truncate">{compactPricing(toolB.pricing)}</span>
+              <span>•</span>
+              <span>Evidence {getEvidenceScore(toolB)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default async function ComparePage() {
   await bootstrapStaticTools();
-  const allTools = (await getAllTools()).filter((tool) => tool.verified !== false);
+  const allTools = (await getAllTools()).filter((tool) => (tool as any).verified !== false);
 
   const sameCategory: Array<{ toolA: ToolItem; toolB: ToolItem; score: number }> = [];
   const crossCategory: Array<{ toolA: ToolItem; toolB: ToolItem; score: number }> = [];
 
   for (let i = 0; i < allTools.length; i += 1) {
     for (let j = i + 1; j < allTools.length; j += 1) {
-      const pair = {
-        toolA: allTools[i],
-        toolB: allTools[j],
-        score:
-          getEvidenceScore(allTools[i]) +
-          getEvidenceScore(allTools[j]) +
-          allTools[i].rating * 10 +
-          allTools[j].rating * 10,
-      };
-
-      if (allTools[i].category === allTools[j].category) {
-        sameCategory.push(pair);
-      } else {
-        crossCategory.push(pair);
-      }
+      const pair = { toolA: allTools[i], toolB: allTools[j], score: pairScore(allTools[i], allTools[j]) };
+      if (allTools[i].category === allTools[j].category) sameCategory.push(pair);
+      else crossCategory.push(pair);
     }
   }
 
   sameCategory.sort((a, b) => b.score - a.score);
   crossCategory.sort((a, b) => b.score - a.score);
 
-  const featuredPairs = sameCategory.slice(0, 9);
+  const featuredPairs = sameCategory.slice(0, 6);
 
   const categoryMap = new Map<string, { label: string; tools: ToolItem[] }>();
   for (const tool of allTools) {
@@ -80,11 +194,13 @@ export default async function ComparePage() {
     categoryMap.get(tool.category)!.tools.push(tool);
   }
 
-  const categories = Array.from(categoryMap.entries()).map(([category, value]) => ({
-    category,
-    label: value.label,
-    tools: value.tools.sort((a, b) => getEvidenceScore(b) - getEvidenceScore(a) || b.rating - a.rating),
-  }));
+  const categories = Array.from(categoryMap.entries())
+    .map(([category, value]) => ({
+      category,
+      label: value.label,
+      tools: value.tools.sort((a, b) => getEvidenceScore(b) - getEvidenceScore(a) || b.rating - a.rating),
+    }))
+    .sort((a, b) => b.tools.length - a.tools.length || a.label.localeCompare(b.label));
 
   return (
     <>
@@ -145,7 +261,7 @@ export default async function ComparePage() {
           </h1>
 
           <p className="text-[15px] text-[var(--text-muted)] max-w-2xl mx-auto leading-7">
-            Focus on the head-to-head decisions that actually matter: same-category rivals, pricing tradeoffs, and stronger workflow fit.
+            Focus on head-to-head decisions that actually matter: same-category rivals, pricing clarity, and stronger workflow fit.
           </p>
         </div>
 
@@ -175,78 +291,33 @@ export default async function ComparePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {featuredPairs.map(({ toolA, toolB }) => (
-              <Link
-                key={`${toolA.slug}-${toolB.slug}`}
-                href={`/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`}
-                className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xl shrink-0">{toolA.logo}</span>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-[var(--text)] leading-tight truncate">{toolA.name}</p>
-                      <p className="text-[10px] text-[var(--text-dim)]">★ {toolA.rating.toFixed(1)} · {toolA.pricing}</p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-[var(--text-dim)] px-1.5">VS</span>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xl shrink-0">{toolB.logo}</span>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-[var(--text)] leading-tight truncate">{toolB.name}</p>
-                      <p className="text-[10px] text-[var(--text-dim)]">★ {toolB.rating.toFixed(1)} · {toolB.pricing}</p>
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[var(--accent)] text-sm group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
+              <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} variant="featured" />
             ))}
           </div>
         </section>
 
-        {categories.map(({ category, label, tools }) => {
+        {categories.map(({ category, label }) => {
           const pairs = sameCategory.filter((pair) => pair.toolA.category === category).slice(0, 6);
           if (!pairs.length) return null;
 
           return (
             <section key={category} className="mb-12">
               <h2 className="text-lg font-bold text-[var(--text)] mb-5 flex items-center gap-3">
-                <span>{tools[0]?.logo}</span>
+                <span>{pairs[0]?.toolA.logo}</span>
                 <span>{label} comparisons</span>
-                <span className="text-[12px] font-normal text-[var(--text-dim)] px-2 py-0.5 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <span
+                  className="text-[12px] font-normal text-[var(--text-dim)] px-2 py-0.5 rounded-lg"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                >
                   {pairs.length} featured
                 </span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {pairs.map(({ toolA, toolB }) => (
-                  <Link
-                    key={`${toolA.slug}-${toolB.slug}`}
-                    href={`/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`}
-                    className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xl">{toolA.logo}</span>
-                        <div>
-                          <p className="text-[13px] font-bold text-[var(--text)] leading-tight">{toolA.name}</p>
-                          <p className="text-[10px] text-[var(--text-dim)]">Evidence {getEvidenceScore(toolA)}</p>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-[var(--text-dim)] px-1.5">VS</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xl">{toolB.logo}</span>
-                        <div>
-                          <p className="text-[13px] font-bold text-[var(--text)] leading-tight">{toolB.name}</p>
-                          <p className="text-[10px] text-[var(--text-dim)]">Evidence {getEvidenceScore(toolB)}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[var(--accent)] text-sm group-hover:translate-x-1 transition-transform">→</span>
-                  </Link>
+                  <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
                 ))}
               </div>
             </section>
@@ -259,33 +330,9 @@ export default async function ComparePage() {
             Useful for exploration, but usually weaker buying pages than same-category matchups.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {crossCategory.slice(0, 9).map(({ toolA, toolB }) => (
-              <Link
-                key={`${toolA.slug}-${toolB.slug}`}
-                href={`/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`}
-                className="group flex items-center justify-between p-4 rounded-2xl transition-all hover:scale-[1.02]"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xl">{toolA.logo}</span>
-                    <div>
-                      <p className="text-[13px] font-bold text-[var(--text)] leading-tight">{toolA.name}</p>
-                      <p className="text-[10px] text-[var(--text-dim)]">{toolA.categoryLabel}</p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-[var(--text-dim)] px-1.5">VS</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xl">{toolB.logo}</span>
-                    <div>
-                      <p className="text-[13px] font-bold text-[var(--text)] leading-tight">{toolB.name}</p>
-                      <p className="text-[10px] text-[var(--text-dim)]">{toolB.categoryLabel}</p>
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[var(--accent)] text-sm group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {crossCategory.slice(0, 6).map(({ toolA, toolB }) => (
+              <PairCard key={`${toolA.slug}-${toolB.slug}`} toolA={toolA} toolB={toolB} />
             ))}
           </div>
         </section>

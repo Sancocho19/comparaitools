@@ -40,7 +40,7 @@ export default function AboutPage() {
           </div>
         </Section>
 
-        <Section title="Ongoing operating requirements">
+        <Section title="What the site will still need from you">
           <ul className="text-[var(--text-muted)] text-[15px] leading-7 list-disc pl-5 space-y-2">
             <li>Periodic spot checks on the highest-traffic pages.</li>
             <li>Search Console and analytics reviews to decide what to prune, refresh, or expand.</li>

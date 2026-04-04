@@ -300,10 +300,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <section className="bottom-cta-box">
             <h2 className="bottom-cta-title">Compare AI tools side by side</h2>
             <p className="bottom-cta-copy">
-              The comparison engine narrows the field with pricing, positioning, and tradeoff data.
+              Not sure which tool wins for your workflow? Use the comparison engine to narrow the
+              field fast.
             </p>
             <Link href="/compare" className="bottom-cta-button">
-              Open comparison hub →
+              Compare Tools Now →
             </Link>
           </section>
 
@@ -336,7 +337,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="sidebar-stack">
             <div className="sidebar-cta-box">
               <h3 className="sidebar-cta-title">Compare AI tools</h3>
-              <p className="sidebar-cta-copy">Workflow, budget, and category comparisons in one place.</p>
+              <p className="sidebar-cta-copy">Find the right fit by workflow, budget, and goals.</p>
               <Link href="/compare" className="sidebar-cta-button">
                 Compare Now →
               </Link>

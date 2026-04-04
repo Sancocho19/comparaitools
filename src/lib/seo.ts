@@ -51,7 +51,7 @@ function getPricingText(tool: SeoTool): string {
 
 export function buildHomeMetadata(): Metadata {
   const title = `Compare AI Tools, Pricing, Reviews & Alternatives (${CURRENT_YEAR}) | ${SITE_NAME}`;
-  const description = `Compare AI tools by pricing, reviews, pros, cons, and use case across chat, coding, image, video, audio, and productivity categories in ${CURRENT_YEAR}.`;
+  const description = `Compare AI tools by pricing, reviews, pros, cons, and best use case. Find better options for chat, coding, images, video, audio, and more in ${CURRENT_YEAR}.`;
 
   return {
     title,
@@ -75,7 +75,7 @@ export function buildHomeMetadata(): Metadata {
 export function buildToolMetadata(tool: SeoTool): Metadata {
   const angle = getToolAngle(tool);
   const title = `${tool.name} Review ${CURRENT_YEAR}: ${sentenceCase(angle)}, Pricing & Pros/Cons | ${SITE_NAME}`;
-  const description = `${tool.name} review for ${CURRENT_YEAR}. Pricing: ${getPricingText(tool)}. Coverage includes features, pros, cons, alternatives, best use cases, and overall market positioning.`;
+  const description = `${tool.name} review for ${CURRENT_YEAR}. Pricing: ${getPricingText(tool)}. See features, pros, cons, best use cases, alternatives, and whether ${tool.name} is worth it.`;
   const canonical = `${SITE_URL}/tools/${tool.slug}`;
 
   return {
@@ -105,8 +105,8 @@ export function buildToolMetadata(tool: SeoTool): Metadata {
 }
 
 export function buildCompareMetadata(toolA: SeoTool, toolB: SeoTool): Metadata {
-  const title = `${toolA.name} vs ${toolB.name} Comparison (${CURRENT_YEAR}): Pricing, Features & Tradeoffs | ${SITE_NAME}`;
-  const description = `Compare ${toolA.name} vs ${toolB.name} in ${CURRENT_YEAR} by pricing, features, positioning, tradeoffs, and switching cost.`;
+  const title = `${toolA.name} vs ${toolB.name} Comparison (${CURRENT_YEAR}): Pricing, Features & Which Is Better? | ${SITE_NAME}`;
+  const description = `Compare ${toolA.name} vs ${toolB.name} in ${CURRENT_YEAR} by pricing, features, best fit, tradeoffs, and switching cost before you choose.`;
   const canonical = `${SITE_URL}/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}`;
 
   return {

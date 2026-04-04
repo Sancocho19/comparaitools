@@ -122,9 +122,9 @@ function buildManualOpportunity(selection: ManualSelection): Opportunity {
   const pretty = tool.replace(/-/g, ' ');
 
   const titleMap: Record<string, string> = {
-    pricing: `${pretty} Pricing 2026: Plans, Costs, and Positioning`,
+    pricing: `${pretty} Pricing 2026: Plans, Costs, and Best Fit`,
     alternatives: `Best ${pretty} Alternatives in 2026`,
-    review: `${pretty} Review 2026: Pricing, Features, and Tradeoffs`,
+    review: `${pretty} Review 2026: Is It Worth It?`,
     guide: `How to Use ${pretty} in 2026`,
     roundup: `Best ${pretty} Alternatives and Competitors in 2026`,
   };

@@ -75,7 +75,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   </span>
                 </Link>
                 <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '280px', margin: '0 0 12px' }}>
-                  AI tool reviews, pricing guides, comparisons, and alternatives built for clearer market analysis and software evaluation.
+                  AI tool reviews, pricing guides, comparisons, and alternatives built to help people pick the right tool faster.
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>© {new Date().getFullYear()} {SITE_NAME}. Editorially independent.</p>
               </div>

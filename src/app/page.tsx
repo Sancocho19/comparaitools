@@ -460,7 +460,7 @@ export default async function HomePage() {
             <SectionHeader
               eyebrow="Intent hubs"
               title="Reviews, pricing pages, and comparisons"
-              subtitle="Stronger internal linking helps both people and search engines reach the pages that answer specific buying questions faster."
+              subtitle="Internal linking strengthens discovery of review, pricing, and comparison pages across the site."
             />
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">

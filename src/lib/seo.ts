@@ -106,7 +106,7 @@ export function buildToolMetadata(tool: SeoTool): Metadata {
 
 export function buildCompareMetadata(toolA: SeoTool, toolB: SeoTool): Metadata {
   const title = `${toolA.name} vs ${toolB.name} Comparison (${CURRENT_YEAR}): Pricing, Features & Which Is Better? | ${SITE_NAME}`;
-  const description = `Compare ${toolA.name} vs ${toolB.name} in ${CURRENT_YEAR} by pricing, features, best fit, tradeoffs, and switching cost before you choose.`;
+  const description = `Compare ${toolA.name} vs ${toolB.name} in ${CURRENT_YEAR} across pricing, features, positioning, tradeoffs, and switching cost.`;
   const canonical = `${SITE_URL}/compare/${[toolA.slug, toolB.slug].sort().join('-vs-')}`;
 
   return {

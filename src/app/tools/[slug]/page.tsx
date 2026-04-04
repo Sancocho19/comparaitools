@@ -146,7 +146,7 @@ export default async function ToolPage({
   const faqs = [
     {
       q: `Is ${tool.name} worth it in 2026?`,
-      a: `${tool.name} is best for ${bestFor || 'general AI work'} and currently shows pricing at ${compactPriceText(tool.pricing)}. Whether it is worth it depends on how much you value ${features.slice(0, 2).join(' and ') || tool.categoryLabel.toLowerCase()}.`,
+      a: `${tool.name} is positioned for ${bestFor || 'general AI work'} and currently shows pricing at ${compactPriceText(tool.pricing)}. Overall value depends on documented strengths such as ${features.slice(0, 2).join(' and ') || tool.categoryLabel.toLowerCase()}.`,
     },
     {
       q: `How much does ${tool.name} cost?`,
@@ -248,7 +248,7 @@ export default async function ToolPage({
               {tool.trend}
             </span>
           </div>
-          <p className="text-[var(--text-muted)] text-sm max-w-[760px] mx-auto">Pricing, pros, cons, alternatives, and best fit before you decide whether {tool.name} belongs in your workflow.</p>
+          <p className="text-[var(--text-muted)] text-sm max-w-[760px] mx-auto">Pricing, pros, cons, alternatives, and market positioning for {tool.name}.</p>
           <p className="text-[var(--text-muted)] text-sm mt-3">by {tool.company} · {tool.users} · Updated {tool.lastUpdated}</p>
           <div className="flex items-center justify-center gap-4 mt-3 flex-wrap">
             <span className="text-[var(--orange)] text-lg tracking-wider">
@@ -264,7 +264,7 @@ export default async function ToolPage({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
             <div>
               <div className="text-xs text-[var(--text-dim)] font-bold uppercase tracking-wider">Best for</div>
-              <p className="text-[var(--text)] text-sm mt-1.5">{bestFor || 'General AI workflow use'}</p>
+              <p className="text-[var(--text)] text-sm mt-1.5">{bestFor || 'General AI operations'}</p>
             </div>
             <div>
               <div className="text-xs text-[var(--text-dim)] font-bold uppercase tracking-wider">Pricing snapshot</div>
@@ -279,7 +279,7 @@ export default async function ToolPage({
 
         {companionPosts.length > 0 ? (
           <section className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-            <h2 className="text-lg font-bold text-[var(--text)] mb-4">Read before you buy</h2>
+            <h2 className="text-lg font-bold text-[var(--text)] mb-4">Evaluation summary</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {companionPosts.map((entry) => (
                 <Link

@@ -175,8 +175,8 @@ export function summarizeDecision(decision: ContentDecision): {
     case 'review':
       return {
         primaryKeyword: `${decision.tool.name} review ${CURRENT_YEAR}`,
-        title: `${decision.tool.name} Review ${CURRENT_YEAR}: Pricing, Strengths, Weaknesses, and Best Use Cases`,
-        description: `Research-backed ${decision.tool.name} review with pricing, strengths, limitations, and best use cases for ${CURRENT_YEAR}.`,
+        title: `${decision.tool.name} Review ${CURRENT_YEAR}: Pricing, Pros, Cons & Best Use Cases`,
+        description: `Research-backed ${decision.tool.name} review with pricing, pros, cons, alternatives, and best use cases for ${CURRENT_YEAR}.`,
         type: 'review' as ContentType,
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
@@ -184,8 +184,8 @@ export function summarizeDecision(decision: ContentDecision): {
     case 'comparison':
       return {
         primaryKeyword: `${decision.toolA.name} vs ${decision.toolB.name}`,
-        title: `${decision.toolA.name} vs ${decision.toolB.name}: Which One Makes More Sense in ${CURRENT_YEAR}?`,
-        description: `A research-backed comparison of ${decision.toolA.name} and ${decision.toolB.name}, including pricing, tradeoffs, and who each tool fits best.`,
+        title: `${decision.toolA.name} vs ${decision.toolB.name} Comparison ${CURRENT_YEAR}: Pricing, Features & Which Is Better?`,
+        description: `A research-backed comparison of ${decision.toolA.name} and ${decision.toolB.name}, covering pricing, features, tradeoffs, and who each tool fits best.`,
         type: 'comparison' as ContentType,
         toolSlugs: [decision.toolA.slug, decision.toolB.slug],
         category: decision.toolA.category,
@@ -202,8 +202,8 @@ export function summarizeDecision(decision: ContentDecision): {
     case 'pricing':
       return {
         primaryKeyword: `${decision.tool.name} pricing ${CURRENT_YEAR}`,
-        title: `${decision.tool.name} Pricing ${CURRENT_YEAR}: Plans, Costs, and Best Fit`,
-        description: `A research-backed breakdown of ${decision.tool.name} pricing, plan differences, upgrade thresholds, and value for money in ${CURRENT_YEAR}.`,
+        title: `${decision.tool.name} Pricing ${CURRENT_YEAR}: Plans, Monthly Cost & Best Fit`,
+        description: `A research-backed breakdown of ${decision.tool.name} pricing, monthly cost, plan differences, upgrade thresholds, and value for money in ${CURRENT_YEAR}.`,
         type: 'pricing' as ContentType,
         toolSlugs: [decision.tool.slug],
         category: decision.tool.category,
@@ -211,8 +211,8 @@ export function summarizeDecision(decision: ContentDecision): {
     case 'alternatives':
       return {
         primaryKeyword: `${decision.tool.name} alternatives ${CURRENT_YEAR}`,
-        title: `Best ${decision.tool.name} Alternatives in ${CURRENT_YEAR}: Better Value, Better Fit, or Both?`,
-        description: `Research-backed alternatives to ${decision.tool.name}, focused on price, fit, and the situations where switching makes sense.`,
+        title: `${decision.tool.name} Alternatives ${CURRENT_YEAR}: Best Options by Price and Fit`,
+        description: `Research-backed alternatives to ${decision.tool.name}, focused on price, fit, switching cost, and when each option makes more sense.`,
         type: 'guide' as ContentType,
         toolSlugs: [decision.tool.slug, ...decision.alternatives.map((tool) => tool.slug)],
         category: decision.tool.category,

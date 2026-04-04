@@ -1,19 +1,41 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
+import { getManifest } from '@/lib/kv-storage';
+import { buildCompareMetadata } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { getAllTools, getTool } from '@/lib/tools-storage';
 import { buildCompareSlug, parseCompareSlug, stripHtml } from '@/lib/utils';
 
 export const revalidate = 3600;
 
-function getEvidenceScore(tool: any): number {
+type CompareTool = Awaited<ReturnType<typeof getAllTools>>[number] & {
+  evidenceScore?: number;
+  sourceCount?: number;
+  research?: {
+    evidenceScore?: number;
+    sourceCount?: number;
+  };
+};
+
+function getEvidenceScore(tool: CompareTool): number {
   return Number(tool?.evidenceScore ?? tool?.research?.evidenceScore ?? 0);
 }
 
-function getSourceCount(tool: any): number {
+function getSourceCount(tool: CompareTool): number {
   return Number(tool?.sourceCount ?? tool?.research?.sourceCount ?? 0);
+}
+
+function researchCell(tool: CompareTool): string {
+  const evidence = getEvidenceScore(tool);
+  if (evidence > 0) return `${evidence}/100`;
+  return 'Tool profile';
+}
+
+function sourcesCell(tool: CompareTool): string {
+  const sources = getSourceCount(tool);
+  return sources > 0 ? `${sources}` : 'Updating';
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ pair: string }> }): Promise<Metadata> {
@@ -22,13 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ pair: str
   const [toolA, toolB] = await Promise.all([getTool(slugA), getTool(slugB)]);
 
   if (!toolA || !toolB) return { title: 'Comparison not found' };
-
-  const canonicalPath = `/compare/${buildCompareSlug(toolA.slug, toolB.slug)}`;
-  return {
-    title: `${toolA.name} vs ${toolB.name}: Pricing, Fit, and Tradeoffs`,
-    description: `Compare ${toolA.name} and ${toolB.name} by pricing, fit, research strength, and the tradeoffs that matter before you choose.`,
-    alternates: { canonical: `${SITE_URL}${canonicalPath}` },
-  };
+  return buildCompareMetadata(toolA, toolB);
 }
 
 function compareScore(a: number, b: number): 'a' | 'b' | null {
@@ -64,7 +80,7 @@ function Row({
 export default async function ComparePairPage({ params }: { params: Promise<{ pair: string }> }) {
   const { pair } = await params;
   const { slugA, slugB, hadYearSuffix } = parseCompareSlug(pair);
-  const [toolA, toolB, allTools] = await Promise.all([getTool(slugA), getTool(slugB), getAllTools()]);
+  const [toolA, toolB, allTools, manifest] = await Promise.all([getTool(slugA), getTool(slugB), getAllTools(), getManifest()]);
 
   if (!toolA || !toolB) notFound();
 
@@ -83,17 +99,30 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
     ? `${winner.name} is the stronger general pick right now, but the better choice still depends on workflow, budget, and switching cost.`
     : `${toolA.name} and ${toolB.name} are close enough that your decision should come down to workflow and budget, not hype.`;
 
-  const schema = {
+  const comparisonArticle = manifest.find((entry) => entry.slug === `${canonicalSlug}-2026`);
+
+  const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${toolA.name} vs ${toolB.name}`,
+    headline: `${toolA.name} vs ${toolB.name} comparison (${new Date().getFullYear()})`,
     description: verdict,
     mainEntityOfPage: `${SITE_URL}/compare/${canonicalSlug}`,
   };
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Compare', item: `${SITE_URL}/compare` },
+      { '@type': 'ListItem', position: 3, name: `${toolA.name} vs ${toolB.name}`, item: `${SITE_URL}/compare/${canonicalSlug}` },
+    ],
+  };
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <div className="grain-overlay" />
 
       <nav
@@ -152,16 +181,25 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
 
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text)] mb-3">
-            {toolA.logo} {toolA.name} vs {toolB.logo} {toolB.name}
+            {toolA.logo} {toolA.name} vs {toolB.logo} {toolB.name} comparison (2026)
           </h1>
           <p className="text-[var(--text-muted)] text-sm max-w-[720px] mx-auto">
-            A cleaner buying decision: pricing, research strength, fit, and the tradeoffs that matter more than generic feature dumping.
+            Pricing, features, best fit, research status, and the tradeoffs that matter before you switch.
           </p>
         </div>
 
-        <div className="rounded-2xl p-5 mb-8 text-center" style={{ background: 'rgba(0,229,160,0.05)', border: '1px solid rgba(0,229,160,0.15)' }}>
+        <div className="rounded-2xl p-5 mb-6 text-center" style={{ background: 'rgba(0,229,160,0.05)', border: '1px solid rgba(0,229,160,0.15)' }}>
           <span className="text-sm text-[var(--accent)] font-bold">Quick take: {verdict}</span>
         </div>
+
+        {comparisonArticle ? (
+          <div className="rounded-2xl p-5 mb-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <p className="text-[var(--text-muted)] text-sm mb-2">Want the longer article version?</p>
+            <Link href={`/blog/${comparisonArticle.slug}`} className="text-[var(--accent)] font-semibold text-sm hover:underline">
+              Read the full {toolA.name} vs {toolB.name} comparison →
+            </Link>
+          </div>
+        ) : null}
 
         <div className="rounded-2xl overflow-hidden mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
           <div className="grid grid-cols-[130px_1fr_1fr] md:grid-cols-[180px_1fr_1fr] text-sm" style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
@@ -180,8 +218,8 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
 
           <Row label="Rating" a={`${toolA.rating.toFixed(1)}/5`} b={`${toolB.rating.toFixed(1)}/5`} winner={compareScore(toolA.rating, toolB.rating)} />
           <Row label="Pricing" a={toolA.pricing} b={toolB.pricing} />
-          <Row label="Evidence" a={`${getEvidenceScore(toolA)}/100`} b={`${getEvidenceScore(toolB)}/100`} winner={compareScore(getEvidenceScore(toolA), getEvidenceScore(toolB))} />
-          <Row label="Sources" a={getSourceCount(toolA) || '—'} b={getSourceCount(toolB) || '—'} winner={compareScore(getSourceCount(toolA), getSourceCount(toolB))} />
+          <Row label="Research" a={researchCell(toolA)} b={researchCell(toolB)} winner={compareScore(getEvidenceScore(toolA), getEvidenceScore(toolB))} />
+          <Row label="Sources cited" a={sourcesCell(toolA)} b={sourcesCell(toolB)} winner={compareScore(getSourceCount(toolA), getSourceCount(toolB))} />
           <Row label="Best for" a={toolA.bestFor} b={toolB.bestFor} />
           <Row label="Momentum" a={toolA.trend} b={toolB.trend} winner={compareScore(parseFloat(toolA.trend), parseFloat(toolB.trend))} />
         </div>
@@ -258,13 +296,13 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
 
         {sameCategory.length > 0 ? (
           <div className="mb-10">
-            <h2 className="text-xl font-bold text-[var(--text)] mb-4">More comparisons in {toolA.categoryLabel}</h2>
-            <div className="flex flex-wrap gap-3">
+            <h2 className="text-lg font-bold text-[var(--text)] mb-4">More comparisons in {toolA.categoryLabel}</h2>
+            <div className="flex flex-wrap gap-2">
               {sameCategory.map((tool) => (
                 <Link
                   key={tool.slug}
                   href={`/compare/${buildCompareSlug(toolA.slug, tool.slug)}`}
-                  className="px-4 py-2 rounded-xl text-[13px] font-semibold"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
                 >
                   {toolA.name} vs {tool.name}

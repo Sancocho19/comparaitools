@@ -8,8 +8,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import SearchBar from "@/components/SearchBar";
 import { getToolsByCategory, getCategories, bootstrapStaticTools } from "@/lib/tools-storage";
+import { buildCategoryMetadata } from "@/lib/seo";
 
-function clean(text: any): string {
+function clean(text: unknown): string {
   if (!text || typeof text !== 'string') return '';
   return text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 }
@@ -21,16 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   if (catTools.length === 0) return { title: "Category Not Found" };
   const label = catTools[0].categoryLabel;
 
-  return {
-    title: `Best ${label} AI Tools 2026 — Top ${catTools.length} Compared | ComparAITools`,
-    description: `Compare the best ${label.toLowerCase()} AI tools in 2026. Side-by-side comparison of ${catTools.slice(0,4).map(t => t.name).join(", ")} and more — with pricing, features & ratings.`,
-    alternates: { canonical: `https://comparaitools.com/category/${category}` },
-    openGraph: {
-      title: `Best ${label} AI Tools 2026 | ComparAITools`,
-      description: `${catTools.length} ${label.toLowerCase()} AI tools compared with real data. Find the best one for your needs.`,
-      type: "website",
-    },
-  };
+  return buildCategoryMetadata(label, category, catTools.map((tool) => tool.name));
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {

@@ -1,9 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import SearchBar from '@/components/SearchBar';
+import { getManifest } from '@/lib/kv-storage';
+import { buildHomeMetadata } from '@/lib/seo';
+import type { ManifestEntry } from '@/lib/types';
 import { getAllTools, getCategories } from '@/lib/tools-storage';
 import { buildCompareSlug } from '@/lib/utils';
 
 export const revalidate = 3600;
+export const metadata: Metadata = buildHomeMetadata();
 
 type ToolItem = Awaited<ReturnType<typeof getAllTools>>[number];
 
@@ -56,6 +61,32 @@ function shortFeature(feature: string): string {
   return text.length <= 26 ? text : `${text.slice(0, 23).trim()}…`;
 }
 
+function articleTypeLabel(type: ManifestEntry['type']): string {
+  switch (type) {
+    case 'review':
+      return 'Review';
+    case 'comparison':
+      return 'Comparison';
+    case 'pricing':
+      return 'Pricing';
+    case 'alternatives':
+      return 'Alternatives';
+    case 'roundup':
+      return 'Best-of';
+    default:
+      return 'Guide';
+  }
+}
+
+function uniquePosts(entries: ManifestEntry[]): ManifestEntry[] {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    if (seen.has(entry.slug)) return false;
+    seen.add(entry.slug);
+    return true;
+  });
+}
+
 function SectionHeader({
   eyebrow,
   title,
@@ -98,6 +129,7 @@ function SectionHeader({
 function ToolCard({ tool }: { tool: ToolItem }) {
   const evidence = getEvidenceScore(tool);
   const sources = getSourceCount(tool);
+  const researchText = evidence > 0 || sources > 0 ? `${evidence || 'Source-backed'}` : 'Profile';
 
   return (
     <Link
@@ -155,12 +187,12 @@ function ToolCard({ tool }: { tool: ToolItem }) {
 
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="rounded-xl px-3 py-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)' }}>
-          <div className="text-[11px] text-[var(--text-dim)] mb-1">Evidence</div>
-          <div className="text-[var(--text)] font-semibold text-sm">{evidence || '—'}/100</div>
+          <div className="text-[11px] text-[var(--text-dim)] mb-1">Research</div>
+          <div className="text-[var(--text)] font-semibold text-sm">{researchText}{evidence > 0 ? '/100' : ''}</div>
         </div>
         <div className="rounded-xl px-3 py-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)' }}>
           <div className="text-[11px] text-[var(--text-dim)] mb-1">Sources</div>
-          <div className="text-[var(--text)] font-semibold text-sm">{sources || '—'}</div>
+          <div className="text-[var(--text)] font-semibold text-sm">{sources > 0 ? sources : 'Updating'}</div>
         </div>
       </div>
 
@@ -175,8 +207,9 @@ function ToolCard({ tool }: { tool: ToolItem }) {
 }
 
 export default async function HomePage() {
-  const [rawTools, categories] = await Promise.all([getAllTools(), getCategories()]);
+  const [rawTools, categories, manifest] = await Promise.all([getAllTools(), getCategories(), getManifest()]);
   const tools = rawTools.filter((tool) => tool.verified !== false);
+  const sortedPosts = [...manifest].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
   const featured = [...tools]
     .sort((a, b) => {
@@ -218,22 +251,33 @@ export default async function HomePage() {
   const highConfidenceCount = tools.filter((tool) => getEvidenceScore(tool) >= 75).length;
   const discoveredCount = tools.filter((tool) => tool.source === 'discovered').length;
 
-  const blogHighlights = [
-    {
-      title: 'Pricing deep dives',
-      description: 'Commercial pages built for users comparing plan costs, upgrade thresholds, and value for money.',
-      href: '/blog',
-    },
-    {
-      title: 'Alternatives that matter',
-      description: 'Sharper side-by-side alternatives and substitute pages aimed at real switching intent, not fluffy lists.',
-      href: '/blog',
-    },
-    {
-      title: 'Reviews and buying guides',
-      description: 'Cleaner review-style pages that explain fit, tradeoffs, and who should actually choose each tool.',
-      href: '/blog',
-    },
+  const preferredSearchSlugs = [
+    'elevenlabs-review-2026',
+    'gemini-pricing-2026',
+    'claude-review-2026',
+    'claude-vs-gemini-2026',
+    'cursor-vs-github-copilot-2026',
+    'suno-review-2026',
+  ];
+
+  const searchIntentPosts = uniquePosts([
+    ...preferredSearchSlugs
+      .map((slug) => sortedPosts.find((post) => post.slug === slug))
+      .filter(Boolean) as ManifestEntry[],
+    ...sortedPosts.filter((post) => ['review', 'pricing', 'comparison'].includes(post.type)).slice(0, 8),
+  ]).slice(0, 6);
+
+  const latestPricing = sortedPosts.filter((post) => post.type === 'pricing').slice(0, 4);
+  const latestReviews = sortedPosts.filter((post) => post.type === 'review').slice(0, 4);
+  const latestComparisons = sortedPosts.filter((post) => post.type === 'comparison').slice(0, 4);
+
+  const quickLinks = [
+    { href: '/blog/gemini-pricing-2026', label: 'Gemini pricing 2026' },
+    { href: '/blog/claude-review-2026', label: 'Claude review 2026' },
+    { href: '/blog/elevenlabs-review-2026', label: 'ElevenLabs review 2026' },
+    { href: '/blog/claude-vs-gemini-2026', label: 'Claude vs Gemini 2026' },
+    { href: '/compare/claude-vs-gemini', label: 'Claude vs Gemini comparison' },
+    { href: '/tools/elevenlabs', label: 'ElevenLabs voice cloning review' },
   ];
 
   return (
@@ -282,7 +326,7 @@ export default async function HomePage() {
       <main className="max-w-[1280px] mx-auto px-5 sm:px-7 py-14 md:py-16 relative z-10">
         <header className="text-center py-6 md:py-8 relative mb-16 md:mb-20">
           <div className="hero-glow" />
-          <div className="relative max-w-[860px] mx-auto">
+          <div className="relative max-w-[920px] mx-auto">
             <div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
@@ -292,37 +336,83 @@ export default async function HomePage() {
                 style={{ background: 'var(--accent)', animation: 'pulse 2s infinite' }}
               />
               <span className="text-xs text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-mono)' }}>
-                {tools.length} verified tools · {highConfidenceCount} strong-research profiles · {discoveredCount} discovered entries
+                {tools.length} tracked tools · {highConfidenceCount} stronger research profiles · {discoveredCount} fresh additions
               </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.08] mb-6 gradient-text">
-              Find the AI tool that fits the job — not just the hype.
+              Compare AI tools by pricing, reviews, and real use case.
             </h1>
 
-            <p className="text-[var(--text-muted)] text-sm sm:text-base leading-8 max-w-[760px] mx-auto mb-8">
-              Pricing snapshots, high-intent comparisons, and buying guides powered by live search research plus editorial logic.
-              Built to win long-tail commercial queries instead of generic fluff.
+            <p className="text-[var(--text-muted)] text-sm sm:text-base leading-8 max-w-[780px] mx-auto mb-8">
+              Find better AI tools for chat, coding, images, video, music, and voice. Compare pricing, pros, cons,
+              alternatives, and side-by-side tradeoffs without digging through generic listicles.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
               <Link
                 href="/tools"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
                 style={{ background: 'linear-gradient(135deg, var(--accent), #00c889)', color: 'var(--bg)' }}
               >
-                Explore tools →
+                Explore reviews →
               </Link>
               <Link
                 href="/compare"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
                 style={{ background: 'var(--bg-card)', color: 'var(--text)', border: '1px solid var(--border)' }}
               >
-                See comparisons
+                Compare side by side
               </Link>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2.5 max-w-[900px] mx-auto">
+              {quickLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="px-3.5 py-2 rounded-full text-[12px] sm:text-[13px] font-semibold"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
         </header>
+
+        {searchIntentPosts.length > 0 ? (
+          <section className="mb-20 md:mb-24">
+            <SectionHeader
+              eyebrow="Popular searches"
+              title="Pages already aligned with high-intent AI tool queries"
+              subtitle="These are the kinds of pages people actually search for: reviews, pricing breakdowns, and direct comparisons."
+              linkHref="/blog"
+              linkLabel="Open all articles →"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
+              {searchIntentPosts.map((post) => (
+                <Link
+                  key={post.slug}
+                  href={`/blog/${post.slug}`}
+                  className="rounded-[24px] p-5 md:p-6 transition-all hover:-translate-y-0.5"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
+                >
+                  <div
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold mb-4"
+                    style={{ background: 'rgba(0,229,160,0.12)', color: 'var(--accent)' }}
+                  >
+                    {articleTypeLabel(post.type)}
+                  </div>
+                  <h3 className="text-[var(--text)] text-lg font-bold mb-3 leading-snug">{post.title}</h3>
+                  <p className="text-[var(--text-muted)] text-sm leading-7 line-clamp-3">{post.excerpt}</p>
+                  <div className="mt-5 text-[var(--accent)] text-sm font-semibold">Open page →</div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mb-16 md:mb-20">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
@@ -352,8 +442,8 @@ export default async function HomePage() {
         <section className="mb-20 md:mb-24">
           <SectionHeader
             eyebrow="Best starting points"
-            title="Featured tools with stronger research signals"
-            subtitle="A cleaner first pass through the tools that already have better evidence and clearer commercial context."
+            title="Featured tool reviews with stronger signals"
+            subtitle="A cleaner first pass through the tools that already have better research coverage, clearer positioning, and stronger buyer intent."
             linkHref="/tools"
             linkLabel="Browse all tools →"
           />
@@ -364,6 +454,48 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {latestPricing.length > 0 || latestReviews.length > 0 || latestComparisons.length > 0 ? (
+          <section className="mb-20 md:mb-24">
+            <SectionHeader
+              eyebrow="Intent hubs"
+              title="Reviews, pricing pages, and comparisons"
+              subtitle="Stronger internal linking helps both people and search engines reach the pages that answer specific buying questions faster."
+            />
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
+              {[
+                { title: 'Latest pricing guides', items: latestPricing },
+                { title: 'Latest reviews', items: latestReviews },
+                { title: 'Latest comparisons', items: latestComparisons },
+              ].map((group) => (
+                <div
+                  key={group.title}
+                  className="rounded-[24px] p-5 md:p-6"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                >
+                  <h3 className="text-[var(--text)] text-lg font-bold mb-4">{group.title}</h3>
+                  <div className="space-y-3">
+                    {group.items.length ? (
+                      group.items.map((item) => (
+                        <Link
+                          key={item.slug}
+                          href={`/blog/${item.slug}`}
+                          className="block rounded-xl px-4 py-3"
+                          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)' }}
+                        >
+                          <div className="text-[var(--text)] text-sm font-semibold leading-6">{item.title}</div>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-[var(--text-dim)] text-sm">This section will fill automatically as new content is published.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {newVerified.length > 0 ? (
           <section className="mb-20 md:mb-24">
@@ -406,7 +538,7 @@ export default async function HomePage() {
         <section className="mb-20 md:mb-24">
           <SectionHeader
             eyebrow="Head-to-head"
-            title="Commercial-intent comparisons"
+            title="Direct comparisons for switching and buying decisions"
             subtitle="Shortcuts into the comparisons that are most likely to matter before someone switches or buys."
             linkHref="/compare"
             linkLabel="Explore compare hub →"
@@ -426,7 +558,7 @@ export default async function HomePage() {
                       <span className="text-xl shrink-0">{a.logo}</span>
                       <span className="text-[14px] font-bold text-[var(--text)] truncate">{a.name}</span>
                     </div>
-                    <p className="text-[11px] text-[var(--text-dim)] mt-2">Evidence {getEvidenceScore(a)}</p>
+                    <p className="text-[11px] text-[var(--text-dim)] mt-2">Research {getEvidenceScore(a) || 'profile'}</p>
                   </div>
 
                   <div className="shrink-0 text-[11px] font-bold text-[var(--text-dim)] px-2">VS</div>
@@ -436,7 +568,7 @@ export default async function HomePage() {
                       <span className="text-[14px] font-bold text-[var(--text)] truncate">{b.name}</span>
                       <span className="text-xl shrink-0">{b.logo}</span>
                     </div>
-                    <p className="text-[11px] text-[var(--text-dim)] mt-2">Evidence {getEvidenceScore(b)}</p>
+                    <p className="text-[11px] text-[var(--text-dim)] mt-2">Research {getEvidenceScore(b) || 'profile'}</p>
                   </div>
                 </div>
               </Link>
@@ -484,37 +616,6 @@ export default async function HomePage() {
             </div>
           </section>
         ) : null}
-
-        <section className="mb-20 md:mb-24">
-          <SectionHeader
-            eyebrow="From the blog"
-            title="Entry points into the content side of the site"
-            subtitle="Use the blog as the softer layer of the funnel: pricing pages, alternatives, reviews, and buying guides."
-            linkHref="/blog"
-            linkLabel="Open the blog →"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-            {blogHighlights.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="rounded-[24px] p-5 md:p-6 transition-all hover:-translate-y-0.5"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', textDecoration: 'none' }}
-              >
-                <div
-                  className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold mb-4"
-                  style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--purple)' }}
-                >
-                  BLOG
-                </div>
-                <h3 className="text-[var(--text)] text-lg font-bold mb-3">{item.title}</h3>
-                <p className="text-[var(--text-muted)] text-sm leading-7">{item.description}</p>
-                <div className="mt-5 text-[var(--accent)] text-sm font-semibold">Read more →</div>
-              </Link>
-            ))}
-          </div>
-        </section>
 
         <section>
           <SectionHeader

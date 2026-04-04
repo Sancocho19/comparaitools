@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { buildDefaultSiteMetadata } from '@/lib/seo';
 
 const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
@@ -17,24 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-  openGraph: {
-    type: 'website',
-    url: SITE_URL,
-    siteName: SITE_NAME,
-    title: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
-    description: SITE_DESCRIPTION,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: `${SITE_NAME} — Source-Backed AI Tool Comparisons`,
-    description: SITE_DESCRIPTION,
-  },
+  ...buildDefaultSiteMetadata(),
   robots: {
     index: true,
     follow: true,
@@ -46,7 +30,6 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  alternates: { canonical: SITE_URL },
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
@@ -68,6 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               name: SITE_NAME,
               url: SITE_URL,
               description: SITE_DESCRIPTION,
+              alternateName: 'Compar AITools',
               potentialAction: {
                 '@type': 'SearchAction',
                 target: `${SITE_URL}/tools?q={search_term_string}`,
@@ -91,7 +75,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   </span>
                 </Link>
                 <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: '280px', margin: '0 0 12px' }}>
-                  A research-led AI software directory built around live search, verified pricing snapshots, and practical buying advice.
+                  AI tool reviews, pricing guides, comparisons, and alternatives built to help people pick the right tool faster.
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--text-dim)', margin: 0 }}>© {new Date().getFullYear()} {SITE_NAME}. Editorially independent.</p>
               </div>

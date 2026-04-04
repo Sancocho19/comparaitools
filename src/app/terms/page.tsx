@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | ComparAITools',
-  description: 'Terms of Service for ComparAITools.com — rules and conditions for using our platform.',
+  description: 'Terms of Service for ComparAITools.com — rules and conditions governing platform use.',
   alternates: { canonical: 'https://comparaitools.com/terms' },
 };
 
@@ -47,16 +47,16 @@ export default function TermsPage() {
         <div className="legal-content">
 
           <h2>1. Acceptance of Terms</h2>
-          <p>By accessing and using {SITE} ("the Website"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our website.</p>
+          <p>Access to and use of {SITE} ("the Website") constitutes acceptance of these Terms of Service. If these terms are not accepted, the website should not be used.</p>
 
           <h2>2. Description of Service</h2>
           <p>{SITE} is an AI tools comparison platform that provides reviews, comparisons, pricing information, and guides about artificial intelligence software and tools. Our content is for informational purposes only.</p>
 
           <h2>3. Use of the Website</h2>
           <h3>Permitted Use</h3>
-          <p>You may use our website for lawful purposes only. You agree to use the website in accordance with these Terms and all applicable laws and regulations.</p>
+          <p>The website may be used only for lawful purposes and in accordance with these Terms and all applicable laws and regulations.</p>
           <h3>Prohibited Activities</h3>
-          <p>You agree not to:</p>
+          <p>The following activities are prohibited:</p>
           <ul>
             <li>Scrape, crawl, or systematically extract data from our website without permission</li>
             <li>Use our content for training AI models without explicit written permission</li>
@@ -69,18 +69,18 @@ export default function TermsPage() {
 
           <h2>4. Intellectual Property</h2>
           <p>All content on {SITE}, including but not limited to text, graphics, logos, images, and software, is the property of ComparAITools or its content suppliers and is protected by intellectual property laws.</p>
-          <p>You may not reproduce, distribute, modify, or create derivative works of our content without express written permission, except for personal, non-commercial use.</p>
+          <p>Content may not be reproduced, distributed, modified, or used to create derivative works without express written permission, except for limited personal, non-commercial use.</p>
 
           <h2>5. Accuracy of Information</h2>
           <p>We strive to provide accurate and up-to-date information about AI tools. However, we make no warranties or representations about the accuracy, completeness, or reliability of any information on our website.</p>
           <p>Pricing, features, and availability of AI tools change frequently. Always verify current information directly with the tool provider before making purchasing decisions.</p>
 
           <h2>6. Affiliate Links & Commercial Relationships</h2>
-          <p>Some links on our website are affiliate links. This means we may earn a commission if you click on a link and make a purchase. This does not affect the price you pay and does not influence our editorial content or ratings.</p>
+          <p>Some links on the website are affiliate links. A commission may be earned if a linked purchase occurs. This does not affect the purchase price and does not influence editorial content or ratings.</p>
           <p>We clearly disclose our affiliate relationships in accordance with FTC guidelines. Our reviews and comparisons are based on genuine assessment of the tools.</p>
 
           <h2>7. Third-Party Websites</h2>
-          <p>Our website contains links to third-party websites. These links are provided for your convenience only. We have no control over the content of those websites and accept no responsibility for them or for any loss or damage that may arise from your use of them.</p>
+          <p>The website may contain links to third-party websites. These links are provided for reference only. ComparAITools does not control third-party content and accepts no responsibility for any loss or damage arising from third-party use.</p>
 
           <h2>8. Disclaimer of Warranties</h2>
           <p>THE WEBSITE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT ANY WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. WE DISCLAIM ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
@@ -89,22 +89,22 @@ export default function TermsPage() {
           <p>TO THE FULLEST EXTENT PERMITTED BY LAW, COMPARAITOOLS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.</p>
 
           <h2>10. Indemnification</h2>
-          <p>You agree to indemnify and hold harmless ComparAITools and its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including legal fees) arising out of your use of the website or violation of these Terms.</p>
+          <p>Users agree to indemnify and hold harmless ComparAITools and its officers, directors, employees, and agents from claims, damages, losses, liabilities, and expenses (including legal fees) arising out of website use or violation of these Terms.</p>
 
           <h2>11. Privacy</h2>
-          <p>Your use of the website is also governed by our <Link href="/privacy" style={{ color: 'var(--accent)' }}>Privacy Policy</Link>, which is incorporated into these Terms by reference.</p>
+          <p>Website use is also governed by the <Link href="/privacy" style={{ color: 'var(--accent)' }}>Privacy Policy</Link>, which is incorporated into these Terms by reference.</p>
 
           <h2>12. Advertising</h2>
           <p>We display advertisements on our website through Google AdSense and potentially other advertising networks. Advertisements are clearly distinguished from editorial content. We do not endorse the products or services advertised.</p>
 
           <h2>13. Changes to Terms</h2>
-          <p>We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the website. Your continued use of the website after any changes constitutes your acceptance of the new Terms.</p>
+          <p>These Terms may be modified at any time. Changes become effective immediately upon posting to the website. Continued use of the website after changes are posted constitutes acceptance of the revised Terms.</p>
 
           <h2>14. Governing Law</h2>
-          <p>These Terms shall be governed by and construed in accordance with applicable law. Any disputes arising from these Terms or your use of the website shall be subject to the exclusive jurisdiction of the competent courts.</p>
+          <p>These Terms are governed by and construed in accordance with applicable law. Any disputes arising from these Terms or website use are subject to the exclusive jurisdiction of the competent courts.</p>
 
           <h2>15. Contact Information</h2>
-          <p>If you have any questions about these Terms of Service, please contact us at:</p>
+          <p>Questions regarding these Terms of Service may be directed to:</p>
           <p><strong>Email:</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a><br />
           <strong>Website:</strong> <a href="https://comparaitools.com">comparaitools.com</a></p>
 

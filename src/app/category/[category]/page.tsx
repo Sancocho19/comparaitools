@@ -214,7 +214,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <div className="text-center p-8 rounded-2xl"
           style={{ background: "linear-gradient(135deg, var(--accent), var(--purple))" }}>
           <h2 className="text-xl font-extrabold mb-2" style={{ color: "var(--bg)" }}>
-            Read Our {label} AI Guide
+            Open the {label} AI Guide
           </h2>
           <p className="text-sm mb-5 opacity-85" style={{ color: "var(--bg)" }}>
             In-depth analysis, use case breakdowns, and expert recommendations.

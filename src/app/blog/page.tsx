@@ -9,7 +9,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'AI Tools Blog: Reviews, Comparisons & Guides 2026 | ComparAITools',
   description:
-    'Research-backed AI tool reviews, comparisons, pricing guides, and practical tutorials to help you choose the right software faster.',
+    'Research-backed AI tool reviews, comparisons, pricing guides, and practical tutorials across major software categories.',
   alternates: { canonical: `${SITE_URL}/blog` },
   openGraph: {
     title: 'AI Tools Blog | ComparAITools',
@@ -177,7 +177,7 @@ export default async function BlogIndexPage() {
 
             <div className="hero-actions">
               <Link href="/compare" className="hero-button-primary">
-                Compare Tools Now →
+                Open comparison hub →
               </Link>
               <Link href="/tools" className="hero-button-secondary">
                 Browse All Tools
@@ -189,8 +189,7 @@ export default async function BlogIndexPage() {
             <div className="hero-card-label">Editorial system</div>
             <h2 className="hero-card-title">Scaled with data, not fluff</h2>
             <p className="hero-card-copy">
-              Every article should help someone make a better software decision faster. The content
-              can scale, but it still needs real sources, real intent, and real usefulness.
+              Every article should support clearer software evaluation. The content can scale, but it still needs real sources, real intent, and real usefulness.
             </p>
             <div className="hero-card-points">
               <span>Live-source research</span>
@@ -261,7 +260,7 @@ export default async function BlogIndexPage() {
             <div className="empty-state">
               <p className="empty-title">No posts yet.</p>
               <p className="empty-copy">
-                Run your generation endpoint after configuring the model, search provider, and KV
+                Populate the publishing pipeline after configuring the model, search provider, and KV
                 store.
               </p>
             </div>
@@ -277,11 +276,10 @@ export default async function BlogIndexPage() {
         <section className="blog-cta">
           <h2 className="blog-cta-title">Compare AI tools side by side</h2>
           <p className="blog-cta-copy">
-            Not sure which tool to choose? Use the comparison engine to find the best fit for your
-            workflow, budget, and team size.
+            The comparison engine organizes pricing, positioning, and tradeoffs across tools, budgets, and team environments.
           </p>
           <Link href="/compare" className="blog-cta-button">
-            Compare Tools Now →
+            Open comparison hub →
           </Link>
         </section>
       </main>

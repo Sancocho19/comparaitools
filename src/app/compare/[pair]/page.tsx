@@ -96,8 +96,8 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
 
   const winner = toolA.rating === toolB.rating ? null : toolA.rating > toolB.rating ? toolA : toolB;
   const verdict = winner
-    ? `${winner.name} is the stronger general pick right now, but the better choice still depends on workflow, budget, and switching cost.`
-    : `${toolA.name} and ${toolB.name} are close enough that your decision should come down to workflow and budget, not hype.`;
+    ? `${winner.name} currently holds the stronger overall profile, while the final ranking still depends on workflow, budget, and switching cost.`
+    : `${toolA.name} and ${toolB.name} remain closely matched on the current data, with differentiation driven mainly by workflow, budget, and switching cost.`;
 
   const comparisonArticle = manifest.find((entry) => entry.slug === `${canonicalSlug}-2026`);
 
@@ -184,7 +184,7 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
             {toolA.logo} {toolA.name} vs {toolB.logo} {toolB.name} comparison (2026)
           </h1>
           <p className="text-[var(--text-muted)] text-sm max-w-[720px] mx-auto">
-            Pricing, features, best fit, research status, and the tradeoffs that matter before you switch.
+            Pricing, features, positioning, research status, and the tradeoffs that matter in a direct comparison.
           </p>
         </div>
 
@@ -194,7 +194,7 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
 
         {comparisonArticle ? (
           <div className="rounded-2xl p-5 mb-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-            <p className="text-[var(--text-muted)] text-sm mb-2">Want the longer article version?</p>
+            <p className="text-[var(--text-muted)] text-sm mb-2">Long-form article version</p>
             <Link href={`/blog/${comparisonArticle.slug}`} className="text-[var(--accent)] font-semibold text-sm hover:underline">
               Read the full {toolA.name} vs {toolB.name} comparison →
             </Link>
@@ -228,15 +228,15 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
           {[
             {
               key: toolA.slug,
-              title: `Pick ${toolA.name} if...`,
+              title: `${toolA.name}: stronger fit when`,
               tool: toolA,
-              bullets: toolA.pros.slice(0, 3).length ? toolA.pros.slice(0, 3) : [`Your workflow fits ${toolA.bestFor.toLowerCase()}.`],
+              bullets: toolA.pros.slice(0, 3).length ? toolA.pros.slice(0, 3) : [`Stronger alignment with ${toolA.bestFor.toLowerCase()}.`],
             },
             {
               key: toolB.slug,
-              title: `Pick ${toolB.name} if...`,
+              title: `${toolB.name}: stronger fit when`,
               tool: toolB,
-              bullets: toolB.pros.slice(0, 3).length ? toolB.pros.slice(0, 3) : [`Your workflow fits ${toolB.bestFor.toLowerCase()}.`],
+              bullets: toolB.pros.slice(0, 3).length ? toolB.pros.slice(0, 3) : [`Stronger alignment with ${toolB.bestFor.toLowerCase()}.`],
             },
           ].map((item) => (
             <div key={item.key} className="rounded-2xl p-6 md:p-7" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
@@ -257,11 +257,11 @@ export default async function ComparePairPage({ params }: { params: Promise<{ pa
         </div>
 
         <div className="rounded-2xl p-6 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-          <h2 className="text-lg font-bold text-[var(--text)] mb-3">How to choose between them</h2>
+          <h2 className="text-lg font-bold text-[var(--text)] mb-3">Decision factors</h2>
           <ul className="text-[var(--text-muted)] text-sm leading-7 list-disc pl-5 space-y-2">
-            <li>Choose <strong>{toolA.name}</strong> when your priority is {toolA.bestFor.toLowerCase()}.</li>
-            <li>Choose <strong>{toolB.name}</strong> when your priority is {toolB.bestFor.toLowerCase()}.</li>
-            <li>If price sensitivity matters more than ecosystem depth, compare the free and entry plans carefully before you switch.</li>
+            <li><strong>{toolA.name}</strong> ranks more strongly when the main priority is {toolA.bestFor.toLowerCase()}.</li>
+            <li><strong>{toolB.name}</strong> ranks more strongly when the main priority is {toolB.bestFor.toLowerCase()}.</li>
+            <li>If price sensitivity matters more than ecosystem depth, the free and entry plans deserve closer scrutiny.</li>
             <li>Switching cost matters: saved prompts, integrations, and team habits can outweigh a single flashy feature.</li>
           </ul>
         </div>

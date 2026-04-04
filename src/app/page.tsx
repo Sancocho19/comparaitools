@@ -341,12 +341,12 @@ export default async function HomePage() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.08] mb-6 gradient-text">
-              Compare AI tools by pricing, reviews, and real use case.
+              AI tool comparisons by pricing, reviews, and real use case.
             </h1>
 
             <p className="text-[var(--text-muted)] text-sm sm:text-base leading-8 max-w-[780px] mx-auto mb-8">
-              Find better AI tools for chat, coding, images, video, music, and voice. Compare pricing, pros, cons,
-              alternatives, and side-by-side tradeoffs without digging through generic listicles.
+              Coverage across chat, coding, image, video, music, and voice categories. Pricing, pros, cons,
+              alternatives, and side-by-side tradeoffs organized without generic listicle formatting.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
@@ -581,7 +581,7 @@ export default async function HomePage() {
             <SectionHeader
               eyebrow="Commercial-ready"
               title="Tools with clearer pricing signals"
-              subtitle="Profiles where pricing is already more understandable, so the buying decision is easier to compare."
+              subtitle="Profiles where pricing structure is already clearer, making direct evaluation easier."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
@@ -621,7 +621,7 @@ export default async function HomePage() {
           <SectionHeader
             eyebrow="Clusters"
             title="Browse by job-to-be-done"
-            subtitle="Use the categories as cleaner entry points instead of trying to scan every tool on the homepage."
+            subtitle="Category hubs provide cleaner entry points than a full homepage scan."
           />
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">

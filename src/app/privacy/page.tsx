@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | ComparAITools',
-  description: 'Privacy Policy for ComparAITools.com — how we collect, use, and protect your data.',
+  description: 'Privacy Policy for ComparAITools.com — how personal data is collected, used, and protected.',
   alternates: { canonical: 'https://comparaitools.com/privacy' },
 };
 
@@ -47,44 +47,44 @@ export default function PrivacyPage() {
         <div className="legal-content">
 
           <h2>1. Introduction</h2>
-          <p>Welcome to {SITE} ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.</p>
+          <p>{SITE} ("we," "our," or "us") is committed to protecting personal information and privacy rights. This Privacy Policy explains how information is collected, used, disclosed, and safeguarded in connection with visits to the website.</p>
 
           <h2>2. Information We Collect</h2>
-          <h3>Information You Provide</h3>
-          <p>We may collect information you voluntarily provide, such as your email address when subscribing to our newsletter or contacting us.</p>
+          <h3>Information Provided Voluntarily</h3>
+          <p>Information submitted voluntarily may be collected, such as an email address used for newsletter subscriptions or contact requests.</p>
           <h3>Automatically Collected Information</h3>
-          <p>When you visit our website, we automatically collect certain information including your IP address, browser type, operating system, referring URLs, pages viewed, and time spent on pages. This is collected through cookies and similar tracking technologies.</p>
+          <p>When the website is visited, certain information may be collected automatically, including IP address, browser type, operating system, referring URLs, pages viewed, and time spent on pages. This data is collected through cookies and similar tracking technologies.</p>
           <h3>Analytics Data</h3>
-          <p>We use Google Analytics to understand how visitors interact with our website. Google Analytics collects data such as your approximate location, device type, and browsing behavior on our site.</p>
+          <p>Google Analytics is used to understand how visitors interact with the website. Analytics data may include approximate location, device type, and on-site browsing behavior.</p>
 
-          <h2>3. How We Use Your Information</h2>
+          <h2>3. How Information Is Used</h2>
           <p>We use the information we collect to:</p>
           <ul>
             <li>Operate and improve our website and services</li>
             <li>Analyze usage patterns and optimize user experience</li>
-            <li>Send newsletters and updates (only with your consent)</li>
-            <li>Respond to your inquiries and support requests</li>
+            <li>Send newsletters and updates when consent has been provided</li>
+            <li>Respond to inquiries and support requests</li>
             <li>Comply with legal obligations</li>
             <li>Detect and prevent fraud or abuse</li>
           </ul>
 
           <h2>4. Cookies Policy</h2>
-          <p id="cookies">We use cookies and similar tracking technologies to enhance your experience on our website.</p>
+          <p id="cookies">Cookies and similar tracking technologies are used to support website functionality, analytics, and advertising operations.</p>
           <h3>Types of Cookies We Use</h3>
           <ul>
             <li><strong>Essential Cookies:</strong> Required for the website to function properly. Cannot be disabled.</li>
             <li><strong>Analytics Cookies:</strong> Help us understand how visitors interact with our site (Google Analytics).</li>
-            <li><strong>Advertising Cookies:</strong> Used by Google AdSense and other advertising partners to serve relevant ads based on your interests.</li>
-            <li><strong>Preference Cookies:</strong> Remember your settings and preferences for future visits.</li>
+            <li><strong>Advertising Cookies:</strong> Used by Google AdSense and other advertising partners to serve relevant ads based on browsing signals and related interests.</li>
+            <li><strong>Preference Cookies:</strong> Store settings and preferences for future visits.</li>
           </ul>
-          <p>You can control cookies through your browser settings. Note that disabling certain cookies may affect the functionality of our website.</p>
+          <p>Cookie settings can be controlled through browser preferences. Disabling certain cookies may affect website functionality.</p>
 
           <h2>5. Advertising & Google AdSense</h2>
-          <p>We use Google AdSense to display advertisements on our website. Google AdSense uses cookies to serve ads based on your prior visits to our website and other websites on the internet. You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
-          <p>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to our website. Google's use of advertising cookies enables it and its partners to serve ads based on your visit to our site and/or other sites on the internet.</p>
+          <p>Google AdSense is used to display advertisements on the website. Google AdSense may use cookies to serve ads based on prior visits to this website and other websites on the internet. Personalized advertising settings can be managed through <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</p>
+          <p>Third-party vendors, including Google, may use cookies to serve ads based on prior visits to this website and other sites on the internet. Google's advertising cookies enable Google and its partners to serve ads based on those visits.</p>
 
           <h2>6. Affiliate Disclosure</h2>
-          <p id="affiliate">{SITE} participates in affiliate marketing programs. This means we may earn a commission when you click on certain links and make a purchase or sign up for a service. This comes at no additional cost to you.</p>
+          <p id="affiliate">{SITE} participates in affiliate marketing programs. A commission may be earned when certain links generate a purchase or service sign-up. This does not create additional cost for the purchaser.</p>
           <p>Our editorial content is independent of our affiliate relationships. We only recommend tools and services we genuinely believe provide value. Affiliate relationships do not influence our reviews, ratings, or comparisons.</p>
           <p>Affiliate relationships we currently maintain may include: Amazon Associates, software affiliate programs, and AI tool company affiliate programs. All sponsored content is clearly marked as such.</p>
 
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
           </ul>
 
           <h2>8. Data Sharing</h2>
-          <p>We do not sell, trade, or rent your personal information to third parties. We may share your information in the following limited circumstances:</p>
+          <p>Personal information is not sold, traded, or rented to third parties. Information may be shared only in the following limited circumstances:</p>
           <ul>
             <li>With service providers who assist in our operations (under strict confidentiality agreements)</li>
             <li>When required by law or legal process</li>
@@ -107,28 +107,28 @@ export default function PrivacyPage() {
           </ul>
 
           <h2>9. Data Retention</h2>
-          <p>We retain your personal data only for as long as necessary to fulfill the purposes outlined in this policy, or as required by law. Analytics data is retained for 26 months by default in Google Analytics.</p>
+          <p>Personal data is retained only for as long as necessary to fulfill the purposes outlined in this policy or as required by law. Analytics data is retained for 26 months by default in Google Analytics.</p>
 
-          <h2>10. Your Rights</h2>
-          <p>Depending on your location, you may have the following rights regarding your personal data:</p>
+          <h2>10. Data Subject Rights</h2>
+          <p>Depending on location, data subjects may have the following rights regarding personal data:</p>
           <ul>
-            <li>Right to access your personal data</li>
+            <li>Right to access personal data</li>
             <li>Right to correct inaccurate data</li>
-            <li>Right to delete your data ("right to be forgotten")</li>
+            <li>Right to delete data ("right to be forgotten")</li>
             <li>Right to object to data processing</li>
             <li>Right to data portability</li>
             <li>Right to withdraw consent at any time</li>
           </ul>
-          <p>To exercise any of these rights, contact us at <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
+          <p>Requests regarding these rights may be submitted to <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
 
           <h2>11. Children's Privacy</h2>
-          <p>Our website is not directed to children under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe we have inadvertently collected such information, please contact us immediately.</p>
+          <p>The website is not directed to children under 13 years of age. Personal information from children under 13 is not knowingly collected. Concerns regarding inadvertent collection may be reported immediately to <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
 
           <h2>12. Changes to This Policy</h2>
-          <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date. We encourage you to review this policy periodically.</p>
+          <p>This Privacy Policy may be updated from time to time. Material changes will be reflected by posting the updated policy on this page and revising the "Last Updated" date.</p>
 
           <h2>13. Contact Us</h2>
-          <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
+          <p>Questions or concerns regarding this Privacy Policy may be directed to:</p>
           <p><strong>Email:</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a><br />
           <strong>Website:</strong> <a href="https://comparaitools.com">comparaitools.com</a></p>
 

@@ -9,11 +9,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Compare AI Tools Side by Side (2026) | ComparAITools',
   description:
-    'Find stronger head-to-head AI tool comparisons by pricing, fit, research strength, and tradeoffs that matter before you switch.',
+    'Head-to-head AI tool comparisons organized by pricing, positioning, research strength, and tradeoffs.',
   alternates: { canonical: 'https://comparaitools.com/compare' },
   openGraph: {
     title: 'Compare AI Tools Side by Side | ComparAITools',
-    description: 'High-intent AI tool comparisons built to help you choose faster and smarter.',
+    description: 'High-intent AI tool comparisons built for clearer software evaluation.',
     url: 'https://comparaitools.com/compare',
     type: 'website',
   },
@@ -314,7 +314,7 @@ export default async function ComparePage() {
             </h1>
 
             <p className="text-[15px] md:text-base text-[var(--text-muted)] leading-8">
-              Focus on head-to-head decisions that actually matter: same-category rivals, pricing clarity, research strength, and stronger workflow fit.
+              Focus on head-to-head decisions that actually matter: same-category rivals, pricing clarity, research strength, and product positioning.
             </p>
           </div>
         </section>
@@ -396,7 +396,7 @@ export default async function ComparePage() {
               Need the underlying tool profiles?
             </h2>
             <p className="text-sm md:text-base mb-7 opacity-90 max-w-[700px] mx-auto leading-7" style={{ color: 'var(--bg)' }}>
-              Browse the research-backed tool profiles before you jump into a comparison page.
+              Browse the research-backed tool profiles before opening a comparison page.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link
